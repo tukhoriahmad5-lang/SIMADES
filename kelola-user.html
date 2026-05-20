@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>SIMADES SIDOMULYO — Kelola User</title>
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f172a;
+      --sidebar-bg: #1e293b;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --primary: #059669;
+      --primary-hover: #047857;
+      --border: #cbd5e1;
+      --danger: #ef4444;
+      --input-bg: #f8fafc;
+    }
+
+    body {
+      background-color: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--sidebar-bg);
+      color: #e2e8f0;
+      position: fixed;
+      top: 0;
+      left: -280px;
+      height: 100vh;
+      transition: left 0.3s ease;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    }
+
+    .sidebar.open { left: 0; }
+    .sidebar-header { padding: 24px 20px; border-bottom: 1px solid #334155; }
+    .sidebar-header h3 { color: #34d399; font-size: 20px; }
+    .sidebar-header p { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .sidebar-menu { flex: 1; padding: 20px 0; }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+      color: #cbd5e1;
+      text-decoration: none;
+    }
+    .menu-item:hover { background: #334155; color: #34d399; }
+    .menu-item span:first-child { font-size: 20px; }
+    .sidebar-footer { padding: 20px; border-top: 1px solid #334155; font-size: 12px; color: #64748b; }
+
+    /* Main Content */
+    .main-content { flex: 1; width: 100%; min-height: 100vh; }
+
+    /* Navbar */
+    .navbar {
+      background: #1e293b;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .navbar-left { display: flex; align-items: center; gap: 16px; }
+    .menu-toggle { background: none; border: none; color: #34d399; font-size: 24px; cursor: pointer; padding: 8px; }
+    .brand { font-weight: 800; font-size: 18px; color: #34d399; }
+    .user-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .user-detail { text-align: right; }
+    .user-name { color: #e2e8f0; font-size: 14px; font-weight: 600; }
+    .user-jabatan { color: #94a3b8; font-size: 11px; }
+    .btn-logout { background: transparent; border: 1px solid #475569; color: #cbd5e1; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-logout:hover { background: var(--danger); border-color: var(--danger); color: #ffffff; }
+
+    /* Container */
+    .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+    .welcome-bar { margin-bottom: 20px; }
+    .welcome-bar h2 { color: #ffffff; font-size: 20px; font-weight: 700; }
+    .welcome-bar p { color: #94a3b8; font-size: 13px; margin-top: 4px; }
+
+    /* Card */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .card-header { margin-bottom: 16px; }
+    .card-header h3 { font-size: 16px; font-weight: 700; }
+
+    /* Tables */
+    .table-responsive { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+    th { background: #f8fafc; color: var(--text-muted); font-weight: 600; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 12px;
+      text-transform: uppercase;
+    }
+    .badge-admin { background: #fee2e2; color: #ef4444; }
+    .badge-pemdes { background: #d1fae5; color: #059669; }
+    .badge-rt { background: #e0f2fe; color: #0284c7; }
+
+    .btn-edit {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-edit:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .modal-card h4 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+    .form-group input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--input-bg); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+    .btn-cancel { background: #f1f5f9; border: 1px solid var(--border); padding: 10px 16px; border-radius: 8px; cursor: pointer; }
+    .btn-save { background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; }
+    .btn-save:disabled { background: #94a3b8; cursor: not-allowed; }
+
+    .loading-text { text-align: center; padding: 30px; color: var(--text-muted); font-style: italic; }
+    .footer { text-align: center; padding: 16px; color: #64748b; font-size: 11px; }
+    .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+    .overlay.show { display: block; }
+
+    @media (min-width: 768px) {
+      .sidebar { position: relative; left: 0; width: 260px; }
+      .menu-toggle { display: none; }
+    }
+    @media (max-width: 768px) {
+      .user-detail { text-align: left; }
+      .navbar { flex-direction: row; justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header"><h3>SIMADES</h3><p>Desa Sidomulyo</p></div>
+    <div class="sidebar-menu">
+      <a href="kelola-user.html" class="menu-item"><span>👑</span> <span>Kelola User</span></a>
+      <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>
+    </div>
+    <div class="sidebar-footer"><span id="sidebarJabatan">Admin</span></div>
+  </div>
+
+  <div class="main-content">
+    <nav class="navbar">
+      <div class="navbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <div class="brand">SIMADES</div>
+      </div>
+      <div class="user-info">
+        <div class="user-detail">
+          <div class="user-name" id="userNameDisplay">Loading...</div>
+          <div class="user-jabatan" id="userJabatanDisplay">Administrator</div>
+        </div>
+        <button class="btn-logout" onclick="logout()">Keluar</button>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="welcome-bar">
+        <h2>Kelola User</h2>
+        <p>Kelola nama pejabat dan password akun</p>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>👥 Daftar Otoritas Jabatan</h3></div>
+        <div class="table-responsive">
+          <table id="tabelPengguna">
+            <thead><tr><th>Jabatan</th><th>Nama Pejabat</th><th>Email</th><th>Role</th><th>Aksi</th></tr></thead>
+            <tbody id="containerPengguna"><tr><td colspan="5" class="loading-text">Memuat data...</td</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="footer">&copy; 2026 Pemerintah Desa Sidomulyo</div>
+  </div>
+</div>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- Modal Edit -->
+<div class="modal-overlay" id="modalEdit">
+  <div class="modal-card">
+    <h4 id="mdlJabatan">Jabatan</h4>
+    <p style="font-size:13px;color:#64748b;margin-bottom:18px;" id="mdlEmail">email@domain.com</p>
+    <div class="form-group"><label>Nama Pejabat</label><input type="text" id="editNama" placeholder="Masukkan nama lengkap"></div>
+    <div class="form-group"><label>Kata Sandi Baru</label><input type="text" id="editPassword" placeholder="Kosongkan jika tidak ingin mengganti"><small style="color:#64748b; font-size:11px;">Minimal 6 karakter jika diisi</small></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="tutupModal()">Batal</button><button class="btn-save" id="btnSimpan" onclick="simpanPerubahan()">Simpan Perubahan</button></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+
+<script>
+  const SUPA_URL = 'https://orqllypofnpsfxmavtgr.supabase.co';
+  const SUPA_KEY = 'sb_publishable_1olKTJsNxGp0LBBbBb8CMQ_fpTt2mgZ';
+  const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  let listPenggunaCache = [];
+  let selectedUser = null;
+  let currentUser = { email: '', name: '', id: '' };
+
+  function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+
+  async function cekSesi() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { window.location.href = 'index.html'; return; }
+    currentUser.email = user.email;
+    currentUser.id = user.id;
+    
+    const { data: profil } = await supabase.from('data_pengguna').select('nama_pejabat, role').eq('auth_id', user.id).single();
+    if (!profil || profil.role !== 'admin') {
+      alert('Akses ditolak! Halaman ini hanya untuk admin.');
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+      return;
+    }
+    currentUser.name = profil.nama_pejabat;
+    document.getElementById('userNameDisplay').textContent = currentUser.name;
+    document.getElementById('userJabatanDisplay').textContent = 'Administrator';
+    document.getElementById('sidebarJabatan').textContent = 'Admin';
+    await loadTabelPengguna();
+  }
+
+  async function loadTabelPengguna() {
+    const tbody = document.getElementById('containerPengguna');
+    tbody.innerHTML = '<tr><td colspan="5" class="loading-text">Memuat data...</td</tr>';
+    try {
+      const { data } = await supabase.from('data_pengguna').select('jabatan, nama_pejabat, email, role').order('role', { ascending: true }).order('jabatan', { ascending: true });
+      if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="loading-text">Tidak ada data</td</tr>'; return; }
+      listPenggunaCache = data;
+      let html = '';
+      data.forEach((user, index) => {
+        const isCurrentUser = (user.email === currentUser.email);
+        html += `<tr><td style="font-weight:600;">${escapeHtml(user.jabatan)}${isCurrentUser ? ' <span style="color:#059669; font-size:10px;">(Anda)</span>' : ''}</td>
+        <td>${escapeHtml(user.nama_pejabat || '<span style="color:#94a3b8; font-style:italic;">Belum diisi</span>')}</td>
+        <td style="color:var(--text-muted); font-family:monospace;">${escapeHtml(user.email)}</td>
+        <td><span class="badge badge-${user.role}">${user.role}</span></td>
+        <td><button class="btn-edit" onclick="bukaModalEdit(${index})">✏️ Edit</button></td>
+      </tr>`;
+      });
+      tbody.innerHTML = html;
+    } catch (err) { tbody.innerHTML = '<tr><td colspan="5" class="loading-text" style="color:var(--danger);">Gagal memuat数据</td</tr>'; }
+  }
+
+  function bukaModalEdit(index) {
+    selectedUser = { ...listPenggunaCache[index] };
+    document.getElementById('mdlJabatan').textContent = selectedUser.jabatan;
+    document.getElementById('mdlEmail').textContent = selectedUser.email;
+    document.getElementById('editNama').value = selectedUser.nama_pejabat || '';
+    document.getElementById('editPassword').value = '';
+    document.getElementById('modalEdit').classList.add('show');
+  }
+  function tutupModal() { document.getElementById('modalEdit').classList.remove('show'); selectedUser = null; }
+
+  async function simpanPerubahan() {
+    if (!selectedUser) return;
+    const namaBaru = document.getElementById('editNama').value.trim();
+    const passwordBaru = document.getElementById('editPassword').value.trim();
+    if (!namaBaru) { alert('Nama pejabat tidak boleh kosong!'); return; }
+    if (passwordBaru && passwordBaru.length < 6) { alert('Password minimal 6 karakter jika ingin diganti.'); return; }
+    
+    const btnSimpan = document.getElementById('btnSimpan');
+    btnSimpan.disabled = true; btnSimpan.textContent = 'Menyimpan...';
+    try {
+      const { error: updateNamaError } = await supabase.from('data_pengguna').update({ nama_pejabat: namaBaru }).eq('email', selectedUser.email);
+      if (updateNamaError) throw new Error('Gagal update nama: ' + updateNamaError.message);
+      if (passwordBaru) {
+        const { error: rpcError } = await supabase.rpc('admin_reset_password', { target_email: selectedUser.email, new_password: passwordBaru });
+        if (rpcError) alert('Password gagal diubah. Pastikan function admin_reset_password sudah dibuat.');
+        else alert('✅ Nama dan password berhasil diperbarui!');
+      } else { alert('✅ Nama pejabat berhasil diperbarui!'); }
+      tutupModal();
+      await loadTabelPengguna();
+    } catch (err) { alert('❌ Gagal: ' + err.message); }
+    finally { btnSimpan.disabled = false; btnSimpan.textContent = 'Simpan Perubahan'; }
+  }
+
+  function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+  async function logout() { if (confirm('Yakin ingin keluar?')) { await supabase.auth.signOut(); window.location.href = 'index.html'; } }
+
+  document.addEventListener('DOMContentLoaded', cekSesi);
+</script>
+</body>
+</html>
