@@ -29,7 +29,6 @@
 
     .app-container { display: flex; min-height: 100vh; }
 
-    /* Sidebar */
     .sidebar {
       width: 280px;
       background: var(--sidebar-bg);
@@ -63,10 +62,8 @@
     .menu-item span:first-child { font-size: 20px; }
     .sidebar-footer { padding: 20px; border-top: 1px solid #334155; font-size: 12px; color: #64748b; }
 
-    /* Main Content */
     .main-content { flex: 1; width: 100%; min-height: 100vh; }
 
-    /* Navbar */
     .navbar {
       background: #1e293b;
       padding: 12px 20px;
@@ -81,7 +78,8 @@
     }
     .navbar-left { display: flex; align-items: center; gap: 16px; }
     .menu-toggle { background: none; border: none; color: #34d399; font-size: 24px; cursor: pointer; padding: 8px; }
-    .brand { font-weight: 800; font-size: 18px; color: #34d399; }
+    .brand { font-weight: 800; font-size: 18px; color: #34d399; text-decoration: none; }
+    .brand:hover { text-decoration: underline; }
     .user-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .user-detail { text-align: right; }
     .user-name { color: #e2e8f0; font-size: 14px; font-weight: 600; }
@@ -89,13 +87,11 @@
     .btn-logout { background: transparent; border: 1px solid #475569; color: #cbd5e1; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
     .btn-logout:hover { background: var(--danger); border-color: var(--danger); color: #ffffff; }
 
-    /* Container */
-    .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+    .container { padding: 20px; max-width: 900px; margin: 0 auto; }
     .welcome-bar { margin-bottom: 20px; }
     .welcome-bar h2 { color: #ffffff; font-size: 20px; font-weight: 700; }
     .welcome-bar p { color: #94a3b8; font-size: 13px; margin-top: 4px; }
 
-    /* Card */
     .card {
       background: var(--card-bg);
       border-radius: 12px;
@@ -113,14 +109,12 @@
     }
     .card-header h3 { font-size: 16px; font-weight: 700; }
 
-    /* Buttons */
     .btn-primary { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
     .btn-secondary { background: #f1f5f9; border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; }
-    .btn-edit { background: #f1f5f9; border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .btn-edit { background: #f1f5f9; border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-right: 8px; }
     .btn-danger { background: #fee2e2; border: 1px solid #fecaca; color: var(--danger); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
     .action-group { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    /* Search */
     .search-box {
       width: 100%;
       padding: 10px 12px;
@@ -130,7 +124,6 @@
       margin-bottom: 16px;
     }
 
-    /* Form */
     .form-group { margin-bottom: 14px; }
     .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
     .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--input-bg); }
@@ -138,10 +131,9 @@
     .numeric-input { -webkit-appearance: none; }
     .form-row { display: flex; flex-direction: column; gap: 12px; }
 
-    /* Tables */
     .table-responsive { width: 100%; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+    th, td { padding: 12px 12px; text-align: left; border-bottom: 1px solid #f1f5f9; }
     th { background: #f8fafc; color: var(--text-muted); font-weight: 600; }
 
     .status-badge {
@@ -187,7 +179,7 @@
     <nav class="navbar">
       <div class="navbar-left">
         <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-        <a href="dashboard.html" class="brand" style="text-decoration: none; color: #34d399;">SIMADES</a>
+        <a href="dashboard.html" class="brand">SIMADES</a>
       </div>
       <div class="user-info">
         <div class="user-detail">
@@ -212,7 +204,6 @@
   const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
 
   let currentUser = { nama: '', jabatan: '', role: '', id: '', rt_id: null, dusun_id: null };
-  let currentMenu = 'list';
   let editingKKId = null;
   let daftarAnggotaSementara = [];
   let editingAnggotaIndex = null;
@@ -294,7 +285,27 @@
   function convertToDatabaseDate(tanggal) { if (!tanggal) return null; let parts = tanggal.split('/'); if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`; return null; }
   function convertToDisplayDate(tanggalDb) { if (!tanggalDb) return ''; let parts = tanggalDb.split('-'); if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`; return tanggalDb; }
 
-  // ========== LIST KK ==========
+  async function generateNIKsementara() {
+    const today = new Date();
+    const tgl = `${today.getDate().toString().padStart(2,'0')}${(today.getMonth()+1).toString().padStart(2,'0')}${today.getFullYear()}`;
+    
+    const { data } = await supabase
+      .from('anggota_keluarga')
+      .select('nik')
+      .ilike('nik', `${tgl}%`);
+    
+    let maxUrut = 0;
+    if (data && data.length > 0) {
+      data.forEach(d => {
+        let urut = parseInt(d.nik.slice(-6));
+        if (urut > maxUrut) maxUrut = urut;
+      });
+    }
+    const nomorUrut = (maxUrut + 1).toString().padStart(6, '0');
+    return `${tgl}${nomorUrut}`;
+  }
+
+  // ========== LIST KK (3 KOLOM: No. KK, Dusun/RT, Aksi) ==========
   async function renderListKK() {
     const container = document.getElementById('mainContainer');
     container.innerHTML = `
@@ -302,7 +313,14 @@
       <div class="card">
         <div class="card-header"><h3>📋 Daftar Kartu Keluarga</h3><button class="btn-primary" onclick="showFormKK()">+ Buat KK Baru</button></div>
         <input type="text" id="searchKK" class="search-box" placeholder="🔍 Cari No. KK..." oninput="loadKKList()">
-        <div class="table-responsive"><table><thead><tr><th>No. KK</th><th>Dusun</th><th>RT / RW</th><th>Aksi</th></tr></thead><tbody id="kkListBody"><tr><td colspan="4" class="text-center">Memuat...</td</tbody></table></div>
+        <div class="table-responsive">
+          <table style="width: 100%;">
+            <thead>
+              <tr><th>No. KK</th><th>Dusun / RT</th><th style="width: 120px;">Aksi</th></tr>
+            </thead>
+            <tbody id="kkListBody"><tr><td colspan="3" class="text-center">Memuat...</td</tbody>
+          </table>
+        </div>
       </div>
     `;
     await loadKKList();
@@ -319,20 +337,20 @@
     if (searchTerm) data = data?.filter(kk => kk.no_kk.toLowerCase().includes(searchTerm)) || [];
     
     const tbody = document.getElementById('kkListBody');
-    if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center">Belum ada数据</td</tr>'; return; }
+    if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center">Belum ada数据</td</tr>'; return; }
     let html = '';
     for (const kk of data) {
       const dusun = kk.data_dusun;
       const rt = kk.data_rt;
-      const rtDisplay = rt ? `${rt.nomor_rt} / ${dusun?.nomor_dusun || ''}` : '-';
-      const showActions = (currentUser.role === 'pemdes');
-      html += `<tr><td style="font-weight:600;">${kk.no_kk}</td><td>${dusun?.nama_dusun || '-'}</td><td>${rtDisplay}</td>`;
-      if (showActions) {
-        html += `<td class="action-group"><button class="btn-edit" onclick="editKK('${kk.id}')">Edit</button><button class="btn-danger" onclick="hapusKK('${kk.id}')">Hapus</button></td>`;
-      } else {
-        html += `<td>-</td>`;
-      }
-      html += `</tr>`;
+      const lokasi = `${dusun?.nama_dusun || '-'} / RT ${rt?.nomor_rt || '-'}`;
+      html += `<tr>
+        <td style="font-weight:600;">${kk.no_kk}</td>
+        <td>${lokasi}</td>
+        <td class="action-group">
+          <button class="btn-edit" onclick="editKK('${kk.id}')">Edit</button>
+          <button class="btn-danger" onclick="hapusKK('${kk.id}')">Hapus</button>
+        </td>
+      `;
     }
     tbody.innerHTML = html;
   }
@@ -361,7 +379,6 @@
   async function renderFormKK(kk = null) {
     const isEdit = (kk !== null);
     const isAdminOrPemdes = (currentUser.role === 'admin' || currentUser.role === 'pemdes');
-    const isReadOnly = (currentUser.role === 'rt');
     
     const container = document.getElementById('mainContainer');
     
@@ -374,7 +391,7 @@
     const rtUser = listRT.find(rt => rt.id === currentUser.rt_id);
     
     container.innerHTML = `
-      <div class="welcome-bar"><h2>${isEdit ? 'Edit Kartu Keluarga' : 'Tambah Kartu Keluarga'}</h2><p>Isi data KK dan anggota keluarga</p></div>
+      <div class="welcome-bar"><h2>${isEdit ? 'Edit Kartu Keluarga' : 'Tambah Kartu Keluarga'}</h2><p>Isi数据KK dan anggota keluarga</p></div>
       <div class="card">
         <div class="form-group"><label>No. KK *</label><input type="text" id="noKK" class="numeric-input" inputmode="numeric" pattern="[0-9]*" value="${kk ? kk.no_kk : ''}" placeholder="Masukkan No. KK" oninput="this.value = this.value.toUpperCase()"></div>
         <div class="form-row">
@@ -396,7 +413,7 @@
         <h3>👨‍👩‍👧 Daftar Anggota</h3>
         <div class="table-responsive"><table class="anggota-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="daftarAnggotaBody"></tbody></table></div>
         <div class="mt-3"><h4>Tambah Anggota</h4>
-        <div class="form-group"><label>NIK *</label><input type="text" id="nikAnggota" class="numeric-input" inputmode="numeric" pattern="[0-9]*" maxlength="16" placeholder="16 digit" oninput="this.value = this.value.toUpperCase()"></div>
+        <div class="form-group"><label>NIK *</label><input type="text" id="nikAnggota" class="numeric-input" inputmode="numeric" placeholder="NIK (auto generate jika kosong)" oninput="this.value = this.value.toUpperCase()"></div>
         <div class="form-group"><label>Nama Lengkap *</label><input type="text" id="namaAnggota" placeholder="Nama lengkap" oninput="this.value = this.value.toUpperCase()"></div>
         <div class="form-row"><div class="form-group"><label>Jenis Kelamin</label><select id="jkAnggota"><option value="LAKI-LAKI">Laki-laki</option><option value="PEREMPUAN">Perempuan</option></select></div>
         <div class="form-group"><label>Tempat Lahir</label><input type="text" id="tempatLahirAnggota" oninput="this.value = this.value.toUpperCase()"></div></div>
@@ -416,6 +433,7 @@
       await loadRTDropdown(kk.dusun_id, kk.rt_id);
     }
     renderDaftarAnggotaTable();
+    await resetFormAnggota();
   }
 
   async function loadRTDropdown(dusunId = null, selectedRtId = null) {
@@ -436,22 +454,29 @@
     let html = '';
     daftarAnggotaSementara.forEach((a, idx) => {
       let statusClass = a.status_warga === 'AKTIF' ? 'status-aktif' : (a.status_warga === 'PINDAH' ? 'status-pindah' : 'status-meninggal');
-      html += `<tr><td>${idx+1}</td><td>${a.nik}</td><td>${a.nama_lengkap}</td><td><span class="status-badge ${statusClass}">${a.status_warga}</span></td>`;
-      if (isAdminOrPemdes) {
-        html += `<td class="action-group"><button class="btn-edit" onclick="editAnggotaDaftar(${idx})">Edit</button><button class="btn-danger" onclick="hapusAnggotaDaftar(${idx})">Hapus</button></td>`;
-      } else {
-        html += `<td>-</td>`;
-      }
-      html += `</tr>`;
+      html += `<tr>
+        <td>${idx+1}</td>
+        <td>${a.nik}</td>
+        <td>${a.nama_lengkap}</td>
+        <td><span class="status-badge ${statusClass}">${a.status_warga}</span></td>
+        ${isAdminOrPemdes ? `<td class="action-group"><button class="btn-edit" onclick="editAnggotaDaftar(${idx})">Edit</button><button class="btn-danger" onclick="hapusAnggotaDaftar(${idx})">Hapus</button></td>` : '<td>-</td>'}
+      `;
     });
     tbody.innerHTML = html;
   }
 
-  function tambahKeDaftar() {
-    const nik = document.getElementById('nikAnggota')?.value.trim();
+  async function tambahKeDaftar() {
+    let nik = document.getElementById('nikAnggota')?.value.trim();
     const nama = document.getElementById('namaAnggota')?.value.trim();
-    if (!nik || nik.length !== 16) { alert('NIK harus 16 digit'); return; }
+    
+    if (!nik || nik === '') {
+      nik = await generateNIKsementara();
+      document.getElementById('nikAnggota').value = nik;
+    }
+    
+    if (!nik) { alert('NIK harus diisi!'); return; }
     if (!nama) { alert('Nama harus diisi'); return; }
+    
     const tglLahirDisplay = document.getElementById('tanggalLahirAnggota')?.value || '';
     const tglLahirDb = convertToDatabaseDate(tglLahirDisplay);
     const anggotaBaru = {
@@ -470,13 +495,33 @@
     else daftarAnggotaSementara.push(anggotaBaru);
     editingAnggotaIndex = null;
     renderDaftarAnggotaTable();
-    resetFormAnggota();
+    await resetFormAnggota();
   }
 
-  function editAnggotaDaftar(idx) { const a = daftarAnggotaSementara[idx]; document.getElementById('nikAnggota').value = a.nik; document.getElementById('namaAnggota').value = a.nama_lengkap; document.getElementById('jkAnggota').value = a.jenis_kelamin; document.getElementById('tempatLahirAnggota').value = a.tempat_lahir || ''; document.getElementById('tanggalLahirAnggota').value = convertToDisplayDate(a.tanggal_lahir); document.getElementById('agamaAnggota').value = a.agama || ''; document.getElementById('pendidikanAnggota').value = a.pendidikan || ''; document.getElementById('pekerjaanAnggota').value = a.pekerjaan || ''; document.getElementById('statusKawinAnggota').value = a.status_perkawinan || 'BELUM KAWIN'; document.getElementById('kewarganegaraanAnggota').value = a.kewarganegaraan || 'WNI'; document.getElementById('statusWargaAnggota').value = a.status_warga || 'AKTIF'; editingAnggotaIndex = idx; }
-  function hapusAnggotaDaftar(idx) { daftarAnggotaSementara.splice(idx, 1); renderDaftarAnggotaTable(); }
-  function resetFormAnggota() {
-    document.getElementById('nikAnggota').value = '';
+  function editAnggotaDaftar(idx) { 
+    const a = daftarAnggotaSementara[idx]; 
+    document.getElementById('nikAnggota').value = a.nik; 
+    document.getElementById('namaAnggota').value = a.nama_lengkap; 
+    document.getElementById('jkAnggota').value = a.jenis_kelamin; 
+    document.getElementById('tempatLahirAnggota').value = a.tempat_lahir || ''; 
+    document.getElementById('tanggalLahirAnggota').value = convertToDisplayDate(a.tanggal_lahir); 
+    document.getElementById('agamaAnggota').value = a.agama || ''; 
+    document.getElementById('pendidikanAnggota').value = a.pendidikan || ''; 
+    document.getElementById('pekerjaanAnggota').value = a.pekerjaan || ''; 
+    document.getElementById('statusKawinAnggota').value = a.status_perkawinan || 'BELUM KAWIN'; 
+    document.getElementById('kewarganegaraanAnggota').value = a.kewarganegaraan || 'WNI'; 
+    document.getElementById('statusWargaAnggota').value = a.status_warga || 'AKTIF'; 
+    editingAnggotaIndex = idx; 
+  }
+  
+  function hapusAnggotaDaftar(idx) { 
+    daftarAnggotaSementara.splice(idx, 1); 
+    renderDaftarAnggotaTable(); 
+  }
+  
+  async function resetFormAnggota() {
+    const nikSementara = await generateNIKsementara();
+    document.getElementById('nikAnggota').value = nikSementara;
     document.getElementById('namaAnggota').value = '';
     document.getElementById('jkAnggota').value = 'LAKI-LAKI';
     document.getElementById('tempatLahirAnggota').value = '';
@@ -500,7 +545,7 @@
       dusunId = document.getElementById('dusunID')?.value;
       rtId = document.getElementById('rtID')?.value;
     }
-    if (!noKK || !dusunId || !rtId) { alert('Isi semua data KK'); return; }
+    if (!noKK || !dusunId || !rtId) { alert('Isi semua数据KK'); return; }
     const dataKK = {
       no_kk: noKK, dusun_id: dusunId, rt_id: rtId,
       kode_pos: document.getElementById('kodePos')?.value,
@@ -525,7 +570,13 @@
     renderListKK();
   }
 
-  async function logout() { if (confirm('Yakin keluar?')) { await supabase.auth.signOut(); window.location.href = 'index.html'; } }
+  async function logout() { 
+    if (confirm('Yakin keluar?')) { 
+      await supabase.auth.signOut(); 
+      window.location.href = 'index.html'; 
+    } 
+  }
+  
   document.addEventListener('DOMContentLoaded', cekSesi);
 </script>
 </body>
