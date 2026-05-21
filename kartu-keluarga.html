@@ -18,6 +18,7 @@
       --primary-hover: #047857;
       --border: #cbd5e1;
       --danger: #ef4444;
+      --warning: #f59e0b;
       --input-bg: #f8fafc;
     }
 
@@ -87,7 +88,7 @@
     .btn-logout { background: transparent; border: 1px solid #475569; color: #cbd5e1; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
     .btn-logout:hover { background: var(--danger); border-color: var(--danger); color: #ffffff; }
 
-    .container { padding: 20px; max-width: 900px; margin: 0 auto; }
+    .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
     .welcome-bar { margin-bottom: 20px; }
     .welcome-bar h2 { color: #ffffff; font-size: 20px; font-weight: 700; }
     .welcome-bar p { color: #94a3b8; font-size: 13px; margin-top: 4px; }
@@ -113,6 +114,7 @@
     .btn-secondary { background: #f1f5f9; border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; }
     .btn-edit { background: #f1f5f9; border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-right: 8px; }
     .btn-danger { background: #fee2e2; border: 1px solid #fecaca; color: var(--danger); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .btn-warning { background: #fef3c7; border: 1px solid #fde68a; color: #b45309; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-right: 8px; }
     .action-group { display: flex; gap: 8px; flex-wrap: wrap; }
 
     .search-box {
@@ -146,6 +148,44 @@
     .status-aktif { background: #d1fae5; color: #059669; }
     .status-pindah { background: #fed7aa; color: #c2410c; }
     .status-meninggal { background: #fee2e2; color: #dc2626; }
+
+    .checkbox-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+    }
+    .checkbox-item {
+      padding: 8px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .checkbox-item:last-child { border-bottom: none; }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 500px;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    }
+    .modal-card h4 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+    .btn-cancel { background: #f1f5f9; border: 1px solid var(--border); padding: 10px 16px; border-radius: 8px; cursor: pointer; }
+    .btn-save { background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; }
 
     .hidden { display: none; }
     .mt-3 { margin-top: 16px; }
@@ -196,6 +236,39 @@
 </div>
 <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
+<!-- Modal Pilih Anggota untuk Pecah KK -->
+<div class="modal-overlay" id="modalPecahKK">
+  <div class="modal-card">
+    <h4>🏠 Pecah Kartu Keluarga</h4>
+    <p class="text-muted" style="margin-bottom: 16px;">Pilih anggota yang akan dipisahkan ke KK baru:</p>
+    <div id="pecahKKAnggotaList" class="checkbox-list"></div>
+    <div class="form-group mt-3">
+      <label>No. KK Baru</label>
+      <input type="text" id="noKKBaru" placeholder="Masukkan No. KK baru" class="numeric-input">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="tutupModalPecahKK()">Batal</button>
+      <button class="btn-save" onclick="prosesPecahKK()">Buat KK Baru & Pindahkan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Pindah Anggota -->
+<div class="modal-overlay" id="modalPindahAnggota">
+  <div class="modal-card">
+    <h4>📦 Pindah Anggota ke KK Lain</h4>
+    <div id="pindahAnggotaInfo" style="margin-bottom: 16px;"></div>
+    <div class="form-group">
+      <label>Pilih KK Tujuan</label>
+      <select id="kkTujuan" class="search-box"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="tutupModalPindah()">Batal</button>
+      <button class="btn-save" onclick="prosesPindahAnggota()">Pindahkan</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 
 <script>
@@ -208,6 +281,8 @@
   let daftarAnggotaSementara = [];
   let editingAnggotaIndex = null;
   let listDusun = [], listRT = [];
+  let currentPecahKKId = null;
+  let currentPindahAnggota = null;
 
   function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
   function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
@@ -305,7 +380,7 @@
     return `${tgl}${nomorUrut}`;
   }
 
-  // ========== LIST KK (3 KOLOM: No. KK, Dusun/RT, Aksi) ==========
+  // ========== LIST KK ==========
   async function renderListKK() {
     const container = document.getElementById('mainContainer');
     container.innerHTML = `
@@ -316,7 +391,7 @@
         <div class="table-responsive">
           <table style="width: 100%;">
             <thead>
-              <tr><th>No. KK</th><th>Dusun / RT</th><th style="width: 120px;">Aksi</th></tr>
+              <tr><th>No. KK</th><th>Dusun / RT</th><th style="width: 160px;">Aksi</th></tr>
             </thead>
             <tbody id="kkListBody"><tr><td colspan="3" class="text-center">Memuat...</td</tbody>
           </table>
@@ -337,7 +412,7 @@
     if (searchTerm) data = data?.filter(kk => kk.no_kk.toLowerCase().includes(searchTerm)) || [];
     
     const tbody = document.getElementById('kkListBody');
-    if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center">Belum ada数据</td</tr>'; return; }
+    if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center">Belum ada data</td</td>'; return; }
     let html = '';
     for (const kk of data) {
       const dusun = kk.data_dusun;
@@ -348,6 +423,7 @@
         <td>${lokasi}</td>
         <td class="action-group">
           <button class="btn-edit" onclick="editKK('${kk.id}')">Edit</button>
+          <button class="btn-warning" onclick="bukaModalPecahKK('${kk.id}')">Pecah KK</button>
           <button class="btn-danger" onclick="hapusKK('${kk.id}')">Hapus</button>
         </td>
       `;
@@ -391,7 +467,7 @@
     const rtUser = listRT.find(rt => rt.id === currentUser.rt_id);
     
     container.innerHTML = `
-      <div class="welcome-bar"><h2>${isEdit ? 'Edit Kartu Keluarga' : 'Tambah Kartu Keluarga'}</h2><p>Isi数据KK dan anggota keluarga</p></div>
+      <div class="welcome-bar"><h2>${isEdit ? 'Edit Kartu Keluarga' : 'Tambah Kartu Keluarga'}</h2><p>Isi data KK dan anggota keluarga</p></div>
       <div class="card">
         <div class="form-group"><label>No. KK *</label><input type="text" id="noKK" class="numeric-input" inputmode="numeric" pattern="[0-9]*" value="${kk ? kk.no_kk : ''}" placeholder="Masukkan No. KK" oninput="this.value = this.value.toUpperCase()"></div>
         <div class="form-row">
@@ -410,8 +486,10 @@
         <div class="form-group"><label>Provinsi</label><input type="text" id="provinsi" value="${kk ? kk.provinsi : 'JAWA TENGAH'}" oninput="this.value = this.value.toUpperCase()"></div>
       </div>
       <div class="card">
-        <h3>👨‍👩‍👧 Daftar Anggota</h3>
-        <div class="table-responsive"><table class="anggota-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="daftarAnggotaBody"></tbody></table></div>
+        <div class="card-header">
+          <h3>👨‍👩‍👧 Daftar Anggota</h3>
+        </div>
+        <div class="table-responsive"><table class="anggota-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Status</th><th>Aksi</th></td></thead><tbody id="daftarAnggotaBody"></tbody></table></div>
         <div class="mt-3"><h4>Tambah Anggota</h4>
         <div class="form-group"><label>NIK *</label><input type="text" id="nikAnggota" class="numeric-input" inputmode="numeric" placeholder="NIK (auto generate jika kosong)" oninput="this.value = this.value.toUpperCase()"></div>
         <div class="form-group"><label>Nama Lengkap *</label><input type="text" id="namaAnggota" placeholder="Nama lengkap" oninput="this.value = this.value.toUpperCase()"></div>
@@ -450,7 +528,7 @@
     const tbody = document.getElementById('daftarAnggotaBody');
     if (!tbody) return;
     const isAdminOrPemdes = (currentUser.role === 'admin' || currentUser.role === 'pemdes');
-    if (daftarAnggotaSementara.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center">Belum ada anggota</td</tr>'; return; }
+    if (daftarAnggotaSementara.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center">Belum ada anggota</td</td>'; return; }
     let html = '';
     daftarAnggotaSementara.forEach((a, idx) => {
       let statusClass = a.status_warga === 'AKTIF' ? 'status-aktif' : (a.status_warga === 'PINDAH' ? 'status-pindah' : 'status-meninggal');
@@ -459,22 +537,181 @@
         <td>${a.nik}</td>
         <td>${a.nama_lengkap}</td>
         <td><span class="status-badge ${statusClass}">${a.status_warga}</span></td>
-        ${isAdminOrPemdes ? `<td class="action-group"><button class="btn-edit" onclick="editAnggotaDaftar(${idx})">Edit</button><button class="btn-danger" onclick="hapusAnggotaDaftar(${idx})">Hapus</button></td>` : '<td>-</td>'}
+        ${isAdminOrPemdes ? `<td class="action-group"><button class="btn-edit" onclick="editAnggotaDaftar(${idx})">Edit</button><button class="btn-warning" onclick="bukaModalPindahAnggota(${idx}, '${a.nik}', '${a.nama_lengkap}')">Pindah</button><button class="btn-danger" onclick="hapusAnggotaDaftar(${idx})">Hapus</button></td>` : '<td>-</td'}
       `;
     });
     tbody.innerHTML = html;
   }
 
-  async function tambahKeDaftar() {
+  // ========== PECAH KK ==========
+  async function bukaModalPecahKK(kkId) {
+    currentPecahKKId = kkId;
+    
+    // Ambil anggota dari KK ini
+    const { data: anggota } = await supabase
+      .from('anggota_keluarga')
+      .select('id, nik, nama_lengkap, status_warga')
+      .eq('kk_id', kkId);
+    
+    if (!anggota || anggota.length === 0) {
+      alert('Tidak ada anggota dalam KK ini');
+      return;
+    }
+    
+    const listDiv = document.getElementById('pecahKKAnggotaList');
+    let html = '';
+    anggota.forEach(a => {
+      html += `
+        <div class="checkbox-item">
+          <label>
+            <input type="checkbox" value="${a.id}" class="pecahCheckbox">
+            <strong>${a.nama_lengkap}</strong> (NIK: ${a.nik}) - ${a.status_warga}
+          </label>
+        </div>
+      `;
+    });
+    listDiv.innerHTML = html;
+    document.getElementById('noKKBaru').value = '';
+    document.getElementById('modalPecahKK').classList.add('show');
+  }
+  
+  function tutupModalPecahKK() {
+    document.getElementById('modalPecahKK').classList.remove('show');
+    currentPecahKKId = null;
+  }
+  
+  async function prosesPecahKK() {
+    const checkboxes = document.querySelectorAll('#pecahKKAnggotaList input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) {
+      alert('Pilih minimal 1 anggota untuk dipisahkan');
+      return;
+    }
+    
+    const noKKBaru = document.getElementById('noKKBaru').value.trim();
+    if (!noKKBaru) {
+      alert('Masukkan No. KK baru');
+      return;
+    }
+    
+    // Cek apakah No. KK baru sudah ada
+    const { data: existingKK } = await supabase
+      .from('kartu_keluarga')
+      .select('id')
+      .eq('no_kk', noKKBaru)
+      .single();
+    
+    if (existingKK) {
+      alert('No. KK sudah terdaftar!');
+      return;
+    }
+    
+    // Ambil data KK lama
+    const { data: kkLama } = await supabase
+      .from('kartu_keluarga')
+      .select('dusun_id, rt_id, kode_pos, desa, kecamatan, kabupaten, provinsi')
+      .eq('id', currentPecahKKId)
+      .single();
+    
+    // Buat KK baru
+    const { data: kkBaru, error: insertError } = await supabase
+      .from('kartu_keluarga')
+      .insert({
+        no_kk: noKKBaru,
+        dusun_id: kkLama.dusun_id,
+        rt_id: kkLama.rt_id,
+        kode_pos: kkLama.kode_pos,
+        desa: kkLama.desa,
+        kecamatan: kkLama.kecamatan,
+        kabupaten: kkLama.kabupaten,
+        provinsi: kkLama.provinsi
+      })
+      .select();
+    
+    if (insertError) {
+      alert('Gagal membuat KK baru: ' + insertError.message);
+      return;
+    }
+    
+    // Pindahkan anggota yang dipilih
+    const anggotaIds = Array.from(checkboxes).map(cb => cb.value);
+    const { error: updateError } = await supabase
+      .from('anggota_keluarga')
+      .update({ kk_id: kkBaru[0].id })
+      .in('id', anggotaIds);
+    
+    if (updateError) {
+      alert('Gagal memindahkan anggota: ' + updateError.message);
+      return;
+    }
+    
+    alert(`✅ Berhasil! ${anggotaIds.length} anggota dipindahkan ke KK baru: ${noKKBaru}`);
+    tutupModalPecahKK();
+    await renderListKK();
+  }
+  
+  // ========== PINDAH ANGGOTA ==========
+  async function bukaModalPindahAnggota(idx, nik, nama) {
+    editingAnggotaIndex = idx;
+    currentPindahAnggota = { idx, nik, nama };
+    
+    // Ambil daftar KK (kecuali KK saat ini)
+    const { data: daftarKK } = await supabase
+      .from('kartu_keluarga')
+      .select('id, no_kk, data_dusun!dusun_id(nama_dusun), data_rt!rt_id(nomor_rt)')
+      .neq('id', editingKKId);
+    
+    const selectKK = document.getElementById('kkTujuan');
+    if (!daftarKK || daftarKK.length === 0) {
+      selectKK.innerHTML = '<option value="">Tidak ada KK lain</option>';
+    } else {
+      let options = '<option value="">Pilih KK Tujuan</option>';
+      daftarKK.forEach(kk => {
+        const dusun = kk.data_dusun?.nama_dusun || '-';
+        const rt = kk.data_rt?.nomor_rt || '-';
+        options += `<option value="${kk.id}">${kk.no_kk} - ${dusun} RT ${rt}</option>`;
+      });
+      selectKK.innerHTML = options;
+    }
+    
+    document.getElementById('pindahAnggotaInfo').innerHTML = `<strong>${nama}</strong> (NIK: ${nik}) akan dipindahkan ke KK lain.`;
+    document.getElementById('modalPindahAnggota').classList.add('show');
+  }
+  
+  function tutupModalPindah() {
+    document.getElementById('modalPindahAnggota').classList.remove('show');
+    currentPindahAnggota = null;
+  }
+  
+  async function prosesPindahAnggota() {
+    const kkTujuanId = document.getElementById('kkTujuan').value;
+    if (!kkTujuanId) {
+      alert('Pilih KK tujuan');
+      return;
+    }
+    
+    // Update anggota di daftar sementara
+    const anggotaBaru = { ...daftarAnggotaSementara[editingAnggotaIndex] };
+    // Tandai bahwa anggota ini akan dipindah (tidak akan disimpan di KK lama)
+    anggotaBaru._pindah = true;
+    anggotaBaru._kkTujuanId = kkTujuanId;
+    daftarAnggotaSementara[editingAnggotaIndex] = anggotaBaru;
+    
+    // Hapus dari tabel tampilan
+    daftarAnggotaSementara = daftarAnggotaSementara.filter((_, i) => i !== editingAnggotaIndex);
+    
+    renderDaftarAnggotaTable();
+    tutupModalPindah();
+    alert('Anggota akan dipindahkan saat KK disimpan. Jangan lupa klik Simpan KK.');
+  }
+
+  function tambahKeDaftar() {
     let nik = document.getElementById('nikAnggota')?.value.trim();
     const nama = document.getElementById('namaAnggota')?.value.trim();
     
     if (!nik || nik === '') {
-      nik = await generateNIKsementara();
-      document.getElementById('nikAnggota').value = nik;
+      alert('NIK harus diisi!');
+      return;
     }
-    
-    if (!nik) { alert('NIK harus diisi!'); return; }
     if (!nama) { alert('Nama harus diisi'); return; }
     
     const tglLahirDisplay = document.getElementById('tanggalLahirAnggota')?.value || '';
@@ -495,7 +732,7 @@
     else daftarAnggotaSementara.push(anggotaBaru);
     editingAnggotaIndex = null;
     renderDaftarAnggotaTable();
-    await resetFormAnggota();
+    resetFormAnggota();
   }
 
   function editAnggotaDaftar(idx) { 
@@ -557,14 +794,33 @@
     let kkId = editingKKId;
     if (kkId) {
       await supabase.from('kartu_keluarga').update(dataKK).eq('id', kkId);
+      // Hapus anggota lama
       await supabase.from('anggota_keluarga').delete().eq('kk_id', kkId);
     } else {
       const { data } = await supabase.from('kartu_keluarga').insert(dataKK).select();
       if (data) kkId = data[0].id;
     }
     if (kkId && daftarAnggotaSementara.length) {
-      const anggotaWithKK = daftarAnggotaSementara.map(a => ({ ...a, kk_id: kkId }));
-      await supabase.from('anggota_keluarga').insert(anggotaWithKK);
+      // Pisahkan anggota yang akan dipindah ke KK lain
+      const anggotaTetap = daftarAnggotaSementara.filter(a => !a._pindah);
+      const anggotaPindah = daftarAnggotaSementara.filter(a => a._pindah);
+      
+      // Simpan anggota tetap
+      if (anggotaTetap.length > 0) {
+        const anggotaTetapWithKK = anggotaTetap.map(a => {
+          const { _pindah, _kkTujuanId, ...clean } = a;
+          return { ...clean, kk_id: kkId };
+        });
+        await supabase.from('anggota_keluarga').insert(anggotaTetapWithKK);
+      }
+      
+      // Pindahkan anggota ke KK lain
+      for (const a of anggotaPindah) {
+        if (a._kkTujuanId) {
+          const { _pindah, _kkTujuanId, ...clean } = a;
+          await supabase.from('anggota_keluarga').insert({ ...clean, kk_id: a._kkTujuanId });
+        }
+      }
     }
     alert('Data tersimpan!');
     renderListKK();
