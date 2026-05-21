@@ -330,6 +330,7 @@
         <td>${s.no_surat}</td>
         <td>
           <button class="btn-secondary" style="padding:2px 8px;" onclick="cetakSurat('${s.id}')">🖨️ Cetak</button>
+          <button class="btn-edit" style="padding:2px 8px; onclick="editSurat('${surat.id}')">✏️ Edit</button>
           <button class="btn-secondary" style="padding:2px 8px;" onclick="hapusSurat('${s.id}')">🗑️ Hapus</button>
         </td>
       </tr>`;
@@ -372,6 +373,141 @@
       renderListSurat(); 
     } 
   }
+  // ========== EDIT SURAT ==========
+async function editSurat(id) {
+  // Ambil data surat dari database
+  const { data: surat, error } = await supabase
+    .from('data_surat')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (error || !surat) {
+    alert('Data surat tidak ditemukan!');
+    return;
+  }
+  
+  // Parsing data warga dari isi surat (ambil NIK dan Nama)
+  // Cari NIK dari isi surat menggunakan regex
+  const nikMatch = surat.isi_surat.match(/NIK<\/td><td[^>]*>:?\s*(\d+)/i);
+  const namaMatch = surat.isi_surat.match(/Nama<\/td><td[^>]*>:?\s*([^<]+)/i);
+  
+  const nik = nikMatch ? nikMatch[1] : '';
+  const nama = namaMatch ? namaMatch[1].trim() : surat.nama || '';
+  
+  // Cari data warga lengkap berdasarkan NIK
+  if (nik) {
+    const { data: warga } = await supabase
+      .from('anggota_keluarga')
+      .select('*')
+      .eq('nik', nik)
+      .single();
+    
+    if (warga) {
+      // Dapatkan alamat warga
+      let alamat = '-';
+      const { data: kkData } = await supabase
+        .from('anggota_keluarga')
+        .select('kk_id')
+        .eq('nik', nik)
+        .single();
+      
+      if (kkData && kkData.kk_id) {
+        const { data: kk } = await supabase
+          .from('kartu_keluarga')
+          .select('dusun_id, rt_id')
+          .eq('id', kkData.kk_id)
+          .single();
+        
+        if (kk) {
+          const { data: dusun } = await supabase
+            .from('data_dusun')
+            .select('nama_dusun, nomor_dusun')
+            .eq('id', kk.dusun_id)
+            .single();
+          
+          const { data: rt } = await supabase
+            .from('data_rt')
+            .select('nomor_rt')
+            .eq('id', kk.rt_id)
+            .single();
+          
+          if (dusun && rt) {
+            alamat = `DUSUN ${dusun.nama_dusun} RT ${rt.nomor_rt}/${dusun.nomor_dusun} DESA ${desaData.nama_desa || 'SIDOMULYO'}`;
+          }
+        }
+      }
+      
+      selectedWarga = {
+        nik: warga.nik,
+        nama: warga.nama_lengkap,
+        tempatLahir: warga.tempat_lahir || '',
+        tglLahir: warga.tanggal_lahir || '',
+        jk: warga.jenis_kelamin || '',
+        pekerjaan: warga.pekerjaan || '',
+        alamat: alamat
+      };
+    }
+  } else {
+    selectedWarga = { nik: '', nama: nama, tempatLahir: '', tglLahir: '', jk: '', pekerjaan: '', alamat: '-' };
+  }
+  
+  currentJenis = surat.jenis_surat;
+  currentNoSurat = surat.no_surat;
+  
+  // Render form edit
+  const container = document.getElementById('mainContainer');
+  container.innerHTML = `
+    <div class="card">
+      <h3>✏️ Edit Surat</h3>
+      <div style="padding:12px; background:#f8fafc; border-radius:8px; margin-bottom:16px;">
+        <strong>No. Surat:</strong> ${currentNoSurat}<br>
+        <strong>Jenis:</strong> ${currentJenis}<br>
+        <strong>Warga:</strong> ${selectedWarga.nama} (${selectedWarga.nik || '-'})
+      </div>
+    </div>
+    <div class="card">
+      <h3>📄 Isi Surat (klik area KUNING untuk edit)</h3>
+      <div id="preview" class="preview"></div>
+    </div>
+    <div class="card" style="display: flex; gap: 12px; justify-content: flex-end;">
+      <button class="btn-secondary" onclick="renderListSurat()">Batal</button>
+      <button class="btn-primary" onclick="updateSurat('${surat.id}')">💾 Update Surat</button>
+    </div>
+  `;
+  
+  // Tampilkan isi surat di preview
+  const previewDiv = document.getElementById('preview');
+  if (previewDiv) {
+    previewDiv.innerHTML = surat.isi_surat;
+  }
+}
+
+// Fungsi untuk update surat
+async function updateSurat(id) {
+  const previewDiv = document.getElementById('preview');
+  const isiSuratBaru = previewDiv ? previewDiv.innerHTML : '';
+  
+  if (!isiSuratBaru || isiSuratBaru === '') {
+    alert('Isi surat kosong!');
+    return;
+  }
+  
+  const { error } = await supabase
+    .from('data_surat')
+    .update({
+      isi_surat: isiSuratBaru,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id);
+  
+  if (error) {
+    alert('Gagal update: ' + error.message);
+  } else {
+    alert('✅ Surat berhasil diupdate!');
+    renderListSurat();
+  }
+}
 
   async function cetakSurat(id) {
     const { data: s } = await supabase.from('data_surat').select('*').eq('id', id).single();
