@@ -386,14 +386,14 @@
     container.innerHTML = `
       <div class="welcome-bar"><h2>Manajemen Kartu Keluarga</h2><p>Kelola KK dan anggota keluarga</p></div>
       <div class="card">
-        <div class="card-header"><h3>📋 Daftar Kartu Keluarga</h3><button class="btn-primary" onclick="showFormKK()">+ Buat KK Baru</button></div>
+        <div class="card-header"><h3>📋 Daftar Kartu Keluarga</h3>${currentUser.role === 'pemdes' ? '<button class="btn-primary" onclick="showFormKK()">+ Buat KK Baru</button>' : ''}</div>
         <input type="text" id="searchKK" class="search-box" placeholder="🔍 Cari No. KK..." oninput="loadKKList()">
         <div class="table-responsive">
           <table style="width: 100%;">
             <thead>
               <tr><th>No. KK</th><th>Dusun / RT</th><th style="width: 160px;">Aksi</th></tr>
             </thead>
-            <tbody id="kkListBody"><tr><td colspan="3" class="text-center">Memuat...</td</tbody>
+            <tbody id="kkListBody"><td><td colspan="3" class="text-center">Memuat...</td</tbody>
           </table>
         </div>
       </div>
@@ -412,21 +412,29 @@
     if (searchTerm) data = data?.filter(kk => kk.no_kk.toLowerCase().includes(searchTerm)) || [];
     
     const tbody = document.getElementById('kkListBody');
-    if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center">Belum ada data</td</td>'; return; }
+    if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center">Belum ada数据</td<tr>'; return; }
     let html = '';
     for (const kk of data) {
       const dusun = kk.data_dusun;
       const rt = kk.data_rt;
       const lokasi = `${dusun?.nama_dusun || '-'} / RT ${rt?.nomor_rt || '-'}`;
-      html += `<tr>
-        <td style="font-weight:600;">${kk.no_kk}</td>
-        <td>${lokasi}</td>
-        <td class="action-group">
+      html += `<tr><td style="font-weight:600;">${kk.no_kk}</td><td>${lokasi}</td>`;
+      
+      if (currentUser.role === 'pemdes') {
+        html += `<td class="action-group">
           <button class="btn-edit" onclick="editKK('${kk.id}')">Edit</button>
           <button class="btn-warning" onclick="bukaModalPecahKK('${kk.id}')">Pecah KK</button>
           <button class="btn-danger" onclick="hapusKK('${kk.id}')">Hapus</button>
-        </td>
-      `;
+        </td>`;
+      } else {
+        // RT hanya bisa lihat, tombol disabled
+        html += `<td class="action-group">
+          <button disabled style="opacity:0.5; padding:6px 12px;">Edit</button>
+          <button disabled style="opacity:0.5; padding:6px 12px;">Pecah KK</button>
+          <button disabled style="opacity:0.5; padding:6px 12px;">Hapus</button>
+        </td>`;
+      }
+      html += `</tr>`;
     }
     tbody.innerHTML = html;
   }
@@ -467,7 +475,7 @@
     const rtUser = listRT.find(rt => rt.id === currentUser.rt_id);
     
     container.innerHTML = `
-      <div class="welcome-bar"><h2>${isEdit ? 'Edit Kartu Keluarga' : 'Tambah Kartu Keluarga'}</h2><p>Isi data KK dan anggota keluarga</p></div>
+      <div class="welcome-bar"><h2>${isEdit ? 'Edit Kartu Keluarga' : 'Tambah Kartu Keluarga'}</h2><p>Isi Data KK dan anggota keluarga</p></div>
       <div class="card">
         <div class="form-group"><label>No. KK *</label><input type="text" id="noKK" class="numeric-input" inputmode="numeric" pattern="[0-9]*" value="${kk ? kk.no_kk : ''}" placeholder="Masukkan No. KK" oninput="this.value = this.value.toUpperCase()"></div>
         <div class="form-row">
@@ -489,7 +497,7 @@
         <div class="card-header">
           <h3>👨‍👩‍👧 Daftar Anggota</h3>
         </div>
-        <div class="table-responsive"><table class="anggota-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Status</th><th>Aksi</th></td></thead><tbody id="daftarAnggotaBody"></tbody></table></div>
+        <div class="table-responsive"><table class="anggota-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="daftarAnggotaBody"></tbody></table></div>
         <div class="mt-3"><h4>Tambah Anggota</h4>
         <div class="form-group"><label>NIK *</label><input type="text" id="nikAnggota" class="numeric-input" inputmode="numeric" placeholder="NIK (auto generate jika kosong)" oninput="this.value = this.value.toUpperCase()"></div>
         <div class="form-group"><label>Nama Lengkap *</label><input type="text" id="namaAnggota" placeholder="Nama lengkap" oninput="this.value = this.value.toUpperCase()"></div>
@@ -528,7 +536,7 @@
     const tbody = document.getElementById('daftarAnggotaBody');
     if (!tbody) return;
     const isAdminOrPemdes = (currentUser.role === 'admin' || currentUser.role === 'pemdes');
-    if (daftarAnggotaSementara.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center">Belum ada anggota</td</td>'; return; }
+    if (daftarAnggotaSementara.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center">Belum ada anggota</td</tr>'; return; }
     let html = '';
     daftarAnggotaSementara.forEach((a, idx) => {
       let statusClass = a.status_warga === 'AKTIF' ? 'status-aktif' : (a.status_warga === 'PINDAH' ? 'status-pindah' : 'status-meninggal');
@@ -537,8 +545,21 @@
         <td>${a.nik}</td>
         <td>${a.nama_lengkap}</td>
         <td><span class="status-badge ${statusClass}">${a.status_warga}</span></td>
-        ${isAdminOrPemdes ? `<td class="action-group"><button class="btn-edit" onclick="editAnggotaDaftar(${idx})">Edit</button><button class="btn-warning" onclick="bukaModalPindahAnggota(${idx}, '${a.nik}', '${a.nama_lengkap}')">Pindah</button><button class="btn-danger" onclick="hapusAnggotaDaftar(${idx})">Hapus</button></td>` : '<td>-</td'}
       `;
+      if (isAdminOrPemdes) {
+        html += `<td class="action-group">
+          <button class="btn-edit" onclick="editAnggotaDaftar(${idx})">Edit</button>
+          <button class="btn-warning" onclick="bukaModalPindahAnggota(${idx}, '${a.nik}', '${a.nama_lengkap}')">Pindah</button>
+          <button class="btn-danger" onclick="hapusAnggotaDaftar(${idx})">Hapus</button>
+        </td>`;
+      } else {
+        html += `<td class="action-group">
+          <button disabled style="opacity:0.5;">Edit</button>
+          <button disabled style="opacity:0.5;">Pindah</button>
+          <button disabled style="opacity:0.5;">Hapus</button>
+        </td>`;
+      }
+      html += `</tr>`;
     });
     tbody.innerHTML = html;
   }
@@ -547,7 +568,6 @@
   async function bukaModalPecahKK(kkId) {
     currentPecahKKId = kkId;
     
-    // Ambil anggota dari KK ini
     const { data: anggota } = await supabase
       .from('anggota_keluarga')
       .select('id, nik, nama_lengkap, status_warga')
@@ -593,7 +613,6 @@
       return;
     }
     
-    // Cek apakah No. KK baru sudah ada
     const { data: existingKK } = await supabase
       .from('kartu_keluarga')
       .select('id')
@@ -605,14 +624,12 @@
       return;
     }
     
-    // Ambil data KK lama
     const { data: kkLama } = await supabase
       .from('kartu_keluarga')
       .select('dusun_id, rt_id, kode_pos, desa, kecamatan, kabupaten, provinsi')
       .eq('id', currentPecahKKId)
       .single();
     
-    // Buat KK baru
     const { data: kkBaru, error: insertError } = await supabase
       .from('kartu_keluarga')
       .insert({
@@ -632,7 +649,6 @@
       return;
     }
     
-    // Pindahkan anggota yang dipilih
     const anggotaIds = Array.from(checkboxes).map(cb => cb.value);
     const { error: updateError } = await supabase
       .from('anggota_keluarga')
@@ -654,7 +670,6 @@
     editingAnggotaIndex = idx;
     currentPindahAnggota = { idx, nik, nama };
     
-    // Ambil daftar KK (kecuali KK saat ini)
     const { data: daftarKK } = await supabase
       .from('kartu_keluarga')
       .select('id, no_kk, data_dusun!dusun_id(nama_dusun), data_rt!rt_id(nomor_rt)')
@@ -689,14 +704,10 @@
       return;
     }
     
-    // Update anggota di daftar sementara
     const anggotaBaru = { ...daftarAnggotaSementara[editingAnggotaIndex] };
-    // Tandai bahwa anggota ini akan dipindah (tidak akan disimpan di KK lama)
     anggotaBaru._pindah = true;
     anggotaBaru._kkTujuanId = kkTujuanId;
     daftarAnggotaSementara[editingAnggotaIndex] = anggotaBaru;
-    
-    // Hapus dari tabel tampilan
     daftarAnggotaSementara = daftarAnggotaSementara.filter((_, i) => i !== editingAnggotaIndex);
     
     renderDaftarAnggotaTable();
@@ -794,18 +805,15 @@
     let kkId = editingKKId;
     if (kkId) {
       await supabase.from('kartu_keluarga').update(dataKK).eq('id', kkId);
-      // Hapus anggota lama
       await supabase.from('anggota_keluarga').delete().eq('kk_id', kkId);
     } else {
       const { data } = await supabase.from('kartu_keluarga').insert(dataKK).select();
       if (data) kkId = data[0].id;
     }
     if (kkId && daftarAnggotaSementara.length) {
-      // Pisahkan anggota yang akan dipindah ke KK lain
       const anggotaTetap = daftarAnggotaSementara.filter(a => !a._pindah);
       const anggotaPindah = daftarAnggotaSementara.filter(a => a._pindah);
       
-      // Simpan anggota tetap
       if (anggotaTetap.length > 0) {
         const anggotaTetapWithKK = anggotaTetap.map(a => {
           const { _pindah, _kkTujuanId, ...clean } = a;
@@ -814,7 +822,6 @@
         await supabase.from('anggota_keluarga').insert(anggotaTetapWithKK);
       }
       
-      // Pindahkan anggota ke KK lain
       for (const a of anggotaPindah) {
         if (a._kkTujuanId) {
           const { _pindah, _kkTujuanId, ...clean } = a;
