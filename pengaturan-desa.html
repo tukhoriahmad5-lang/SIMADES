@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>SIMADES SIDOMULYO — Pengaturan Desa</title>
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f172a;
+      --sidebar-bg: #1e293b;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --primary: #059669;
+      --primary-hover: #047857;
+      --border: #cbd5e1;
+      --danger: #ef4444;
+      --input-bg: #f8fafc;
+    }
+
+    body {
+      background-color: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+
+    .app-container { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--sidebar-bg);
+      color: #e2e8f0;
+      position: fixed;
+      top: 0;
+      left: -280px;
+      height: 100vh;
+      transition: left 0.3s ease;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    }
+    .sidebar.open { left: 0; }
+    .sidebar-header { padding: 24px 20px; border-bottom: 1px solid #334155; }
+    .sidebar-header h3 { color: #34d399; font-size: 20px; }
+    .sidebar-header p { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .sidebar-menu { flex: 1; padding: 20px 0; }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+      color: #cbd5e1;
+      text-decoration: none;
+    }
+    .menu-item:hover { background: #334155; color: #34d399; }
+    .menu-item span:first-child { font-size: 20px; }
+    .sidebar-footer { padding: 20px; border-top: 1px solid #334155; font-size: 12px; color: #64748b; }
+
+    /* Main Content */
+    .main-content { flex: 1; width: 100%; min-height: 100vh; }
+
+    /* Navbar */
+    .navbar {
+      background: #1e293b;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .navbar-left { display: flex; align-items: center; gap: 16px; }
+    .menu-toggle { background: none; border: none; color: #34d399; font-size: 24px; cursor: pointer; padding: 8px; }
+    .brand { font-weight: 800; font-size: 18px; color: #34d399; }
+    .user-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .user-detail { text-align: right; }
+    .user-name { color: #e2e8f0; font-size: 14px; font-weight: 600; }
+    .user-jabatan { color: #94a3b8; font-size: 11px; }
+    .btn-logout { background: transparent; border: 1px solid #475569; color: #cbd5e1; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-logout:hover { background: var(--danger); border-color: var(--danger); color: #ffffff; }
+
+    /* Container */
+    .container { padding: 20px; max-width: 800px; margin: 0 auto; }
+    .welcome-bar { margin-bottom: 20px; }
+    .welcome-bar h2 { color: #ffffff; font-size: 20px; font-weight: 700; }
+    .welcome-bar p { color: #94a3b8; font-size: 13px; margin-top: 4px; }
+
+    /* Card */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+    .form-group input, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--input-bg); font-family: inherit; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+    .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-secondary {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .alert-success {
+      background: #d1fae5;
+      color: #059669;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .alert-success.show { display: block; }
+    .alert-error {
+      background: #fee2e2;
+      color: #dc2626;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .alert-error.show { display: block; }
+
+    .footer { text-align: center; padding: 16px; color: #64748b; font-size: 11px; }
+    .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+    .overlay.show { display: block; }
+
+    @media (min-width: 768px) {
+      .sidebar { position: relative; left: 0; width: 260px; }
+      .menu-toggle { display: none; }
+    }
+    @media (max-width: 768px) {
+      .user-detail { text-align: left; }
+      .navbar { flex-direction: row; justify-content: space-between; }
+      .form-row { grid-template-columns: 1fr; gap: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header"><h3>SIMADES</h3><p>Desa Sidomulyo</p></div>
+    <div class="sidebar-menu" id="sidebarMenu"></div>
+    <div class="sidebar-footer"><span id="sidebarJabatan">Loading...</span></div>
+  </div>
+
+  <div class="main-content">
+    <nav class="navbar">
+      <div class="navbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <a href="dashboard.html" class="brand" style="text-decoration: none; color: #34d399;">SIMADES</a>
+      </div>
+      <div class="user-info">
+        <div class="user-detail">
+          <div class="user-name" id="userNameDisplay">Loading...</div>
+          <div class="user-jabatan" id="userJabatanDisplay">-</div>
+        </div>
+        <button class="btn-logout" onclick="logout()">Keluar</button>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="welcome-bar">
+        <h2>Pengaturan Desa</h2>
+        <p>Konfigurasi data desa untuk keperluan surat menyurat</p>
+      </div>
+
+      <div class="alert-success" id="alertSuccess">✅ Data desa berhasil disimpan!</div>
+      <div class="alert-error" id="alertError">❌ Gagal menyimpan data.</div>
+
+      <div class="card">
+        <div class="form-group">
+          <label>Nama Desa</label>
+          <input type="text" id="namaDesa" placeholder="Nama Desa">
+        </div>
+        <div class="form-group">
+          <label>Kecamatan</label>
+          <input type="text" id="kecamatan" placeholder="Kecamatan">
+        </div>
+        <div class="form-group">
+          <label>Kabupaten</label>
+          <input type="text" id="kabupaten" placeholder="Kabupaten">
+        </div>
+        <div class="form-group">
+          <label>Provinsi</label>
+          <input type="text" id="provinsi" placeholder="Provinsi">
+        </div>
+        <div class="form-group">
+          <label>Kode Pos</label>
+          <input type="text" id="kodePos" placeholder="Kode Pos">
+        </div>
+        <div class="form-group">
+          <label>Alamat Kantor Desa</label>
+          <textarea id="alamatKantor" rows="2" placeholder="Alamat kantor desa"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Telepon</label>
+            <input type="text" id="telepon" placeholder="Nomor telepon">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="Email desa">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Kepala Desa</label>
+            <input type="text" id="kepalaDesa" placeholder="Nama Kepala Desa">
+          </div>
+          <div class="form-group">
+            <label>NIP Kepala Desa</label>
+            <input type="text" id="nipKepalaDesa" placeholder="NIP Kepala Desa">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>URL Logo (opsional)</label>
+          <input type="text" id="logoUrl" placeholder="https://...">
+        </div>
+        <button class="btn-primary" id="btnSimpan" onclick="simpanDataDesa()">💾 Simpan Pengaturan</button>
+      </div>
+    </div>
+    <div class="footer">&copy; 2026 Pemerintah Desa Sidomulyo</div>
+  </div>
+</div>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+
+<script>
+  const SUPA_URL = 'https://orqllypofnpsfxmavtgr.supabase.co';
+  const SUPA_KEY = 'sb_publishable_1olKTJsNxGp0LBBbBb8CMQ_fpTt2mgZ';
+  const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  let currentUser = { nama: '', jabatan: '', role: '', id: '' };
+  let desaId = null;
+
+  function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+
+  async function cekSesi() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { window.location.href = 'index.html'; return; }
+
+    const { data: profil } = await supabase
+      .from('data_pengguna')
+      .select('nama_pejabat, jabatan, role, id')
+      .eq('auth_id', user.id)
+      .single();
+
+    if (!profil) {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+      return;
+    }
+
+    currentUser.nama = profil.nama_pejabat;
+    currentUser.jabatan = profil.jabatan;
+    currentUser.role = profil.role;
+    currentUser.id = profil.id;
+
+    document.getElementById('userNameDisplay').textContent = currentUser.nama;
+    document.getElementById('userJabatanDisplay').textContent = currentUser.jabatan;
+    document.getElementById('sidebarJabatan').textContent = currentUser.jabatan;
+
+    renderSidebar();
+    await loadDataDesa();
+  }
+
+  function renderSidebar() {
+    const sidebarMenu = document.getElementById('sidebarMenu');
+    let menuHtml = '';
+
+    if (currentUser.role === 'admin') {
+      menuHtml = `<a href="kelola-user.html" class="menu-item"><span>👑</span> <span>Kelola User</span></a>
+                  <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>`;
+    } else if (currentUser.role === 'pemdes') {
+      menuHtml = `<a href="kartu-keluarga.html" class="menu-item"><span>📋</span> <span>Kartu Keluarga</span></a>
+                  <a href="daftar-penduduk.html" class="menu-item"><span>👥</span> <span>Daftar Penduduk</span></a>
+                  <a href="surat.html" class="menu-item"><span>📝</span> <span>Surat Menyurat</span></a>
+                  <a href="pengaturan-desa.html" class="menu-item"><span>🏠</span> <span>Pengaturan Desa</span></a>
+                  <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>`;
+    } else if (currentUser.role === 'rt') {
+      menuHtml = `<a href="kartu-keluarga.html" class="menu-item"><span>📋</span> <span>Kartu Keluarga</span></a>
+                  <a href="daftar-penduduk.html" class="menu-item"><span>👥</span> <span>Daftar Penduduk</span></a>
+                  <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>`;
+    }
+    sidebarMenu.innerHTML = menuHtml;
+  }
+
+  async function loadDataDesa() {
+    const { data, error } = await supabase.from('data_desa').select('*').single();
+    
+    if (error) {
+      console.error('Gagal load data desa:', error);
+      return;
+    }
+    
+    if (data) {
+      desaId = data.id;
+      document.getElementById('namaDesa').value = data.nama_desa || '';
+      document.getElementById('kecamatan').value = data.nama_kecamatan || '';
+      document.getElementById('kabupaten').value = data.nama_kabupaten || '';
+      document.getElementById('provinsi').value = data.nama_provinsi || '';
+      document.getElementById('kodePos').value = data.kode_pos || '';
+      document.getElementById('alamatKantor').value = data.alamat_kantor || '';
+      document.getElementById('telepon').value = data.telepon || '';
+      document.getElementById('email').value = data.email || '';
+      document.getElementById('kepalaDesa').value = data.kepala_desa || '';
+      document.getElementById('nipKepalaDesa').value = data.nip_kepala_desa || '';
+      document.getElementById('logoUrl').value = data.logo_url || '';
+    }
+  }
+
+  function showAlert(type, message) {
+    const successEl = document.getElementById('alertSuccess');
+    const errorEl = document.getElementById('alertError');
+    
+    successEl.classList.remove('show');
+    errorEl.classList.remove('show');
+    
+    if (type === 'success') {
+      successEl.textContent = message || '✅ Data desa berhasil disimpan!';
+      successEl.classList.add('show');
+    } else {
+      errorEl.textContent = message || '❌ Gagal menyimpan data.';
+      errorEl.classList.add('show');
+    }
+    
+    setTimeout(() => {
+      successEl.classList.remove('show');
+      errorEl.classList.remove('show');
+    }, 3000);
+  }
+
+  async function simpanDataDesa() {
+    const data = {
+      nama_desa: document.getElementById('namaDesa').value,
+      nama_kecamatan: document.getElementById('kecamatan').value,
+      nama_kabupaten: document.getElementById('kabupaten').value,
+      nama_provinsi: document.getElementById('provinsi').value,
+      kode_pos: document.getElementById('kodePos').value,
+      alamat_kantor: document.getElementById('alamatKantor').value,
+      telepon: document.getElementById('telepon').value,
+      email: document.getElementById('email').value,
+      kepala_desa: document.getElementById('kepalaDesa').value,
+      nip_kepala_desa: document.getElementById('nipKepalaDesa').value,
+      logo_url: document.getElementById('logoUrl').value
+    };
+
+    const btn = document.getElementById('btnSimpan');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    try {
+      let error;
+      if (desaId) {
+        const { error: updateError } = await supabase
+          .from('data_desa')
+          .update(data)
+          .eq('id', desaId);
+        error = updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('data_desa')
+          .insert(data);
+        error = insertError;
+      }
+
+      if (error) throw error;
+      
+      showAlert('success', '✅ Data desa berhasil disimpan!');
+      await loadDataDesa();
+    } catch (err) {
+      console.error(err);
+      showAlert('error', '❌ Gagal menyimpan: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '💾 Simpan Pengaturan';
+    }
+  }
+
+  async function logout() { if (confirm('Yakin keluar?')) { await supabase.auth.signOut(); window.location.href = 'index.html'; } }
+
+  document.addEventListener('DOMContentLoaded', cekSesi);
+</script>
+</body>
+</html>

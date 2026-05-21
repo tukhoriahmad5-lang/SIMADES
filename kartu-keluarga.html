@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>SIMADES SIDOMULYO — Kartu Keluarga</title>
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f172a;
+      --sidebar-bg: #1e293b;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --primary: #059669;
+      --primary-hover: #047857;
+      --border: #cbd5e1;
+      --danger: #ef4444;
+      --input-bg: #f8fafc;
+    }
+
+    body {
+      background-color: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+
+    .app-container { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--sidebar-bg);
+      color: #e2e8f0;
+      position: fixed;
+      top: 0;
+      left: -280px;
+      height: 100vh;
+      transition: left 0.3s ease;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    }
+    .sidebar.open { left: 0; }
+    .sidebar-header { padding: 24px 20px; border-bottom: 1px solid #334155; }
+    .sidebar-header h3 { color: #34d399; font-size: 20px; }
+    .sidebar-header p { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .sidebar-menu { flex: 1; padding: 20px 0; }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+      color: #cbd5e1;
+      text-decoration: none;
+    }
+    .menu-item:hover { background: #334155; color: #34d399; }
+    .menu-item span:first-child { font-size: 20px; }
+    .sidebar-footer { padding: 20px; border-top: 1px solid #334155; font-size: 12px; color: #64748b; }
+
+    /* Main Content */
+    .main-content { flex: 1; width: 100%; min-height: 100vh; }
+
+    /* Navbar */
+    .navbar {
+      background: #1e293b;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .navbar-left { display: flex; align-items: center; gap: 16px; }
+    .menu-toggle { background: none; border: none; color: #34d399; font-size: 24px; cursor: pointer; padding: 8px; }
+    .brand { font-weight: 800; font-size: 18px; color: #34d399; }
+    .user-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .user-detail { text-align: right; }
+    .user-name { color: #e2e8f0; font-size: 14px; font-weight: 600; }
+    .user-jabatan { color: #94a3b8; font-size: 11px; }
+    .btn-logout { background: transparent; border: 1px solid #475569; color: #cbd5e1; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-logout:hover { background: var(--danger); border-color: var(--danger); color: #ffffff; }
+
+    /* Container */
+    .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+    .welcome-bar { margin-bottom: 20px; }
+    .welcome-bar h2 { color: #ffffff; font-size: 20px; font-weight: 700; }
+    .welcome-bar p { color: #94a3b8; font-size: 13px; margin-top: 4px; }
+
+    /* Card */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .card-header h3 { font-size: 16px; font-weight: 700; }
+
+    /* Buttons */
+    .btn-primary { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-secondary { background: #f1f5f9; border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+    .btn-edit { background: #f1f5f9; border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .btn-danger { background: #fee2e2; border: 1px solid #fecaca; color: var(--danger); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .action-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Search */
+    .search-box {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    /* Form */
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+    .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--input-bg); }
+    .form-group input:disabled { background: #e2e8f0; color: var(--text-muted); cursor: not-allowed; }
+    .numeric-input { -webkit-appearance: none; }
+    .form-row { display: flex; flex-direction: column; gap: 12px; }
+
+    /* Tables */
+    .table-responsive { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+    th { background: #f8fafc; color: var(--text-muted); font-weight: 600; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .status-aktif { background: #d1fae5; color: #059669; }
+    .status-pindah { background: #fed7aa; color: #c2410c; }
+    .status-meninggal { background: #fee2e2; color: #dc2626; }
+
+    .hidden { display: none; }
+    .mt-3 { margin-top: 16px; }
+    .text-center { text-align: center; }
+
+    .footer { text-align: center; padding: 16px; color: #64748b; font-size: 11px; }
+    .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+    .overlay.show { display: block; }
+
+    @media (min-width: 768px) {
+      .sidebar { position: relative; left: 0; width: 260px; }
+      .menu-toggle { display: none; }
+      .form-row { flex-direction: row; gap: 16px; }
+      .form-row .form-group { flex: 1; }
+    }
+    @media (max-width: 768px) {
+      .user-detail { text-align: left; }
+      .navbar { flex-direction: row; justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header"><h3>SIMADES</h3><p>Desa Sidomulyo</p></div>
+    <div class="sidebar-menu" id="sidebarMenu"></div>
+    <div class="sidebar-footer"><span id="sidebarJabatan">Loading...</span></div>
+  </div>
+
+  <div class="main-content">
+    <nav class="navbar">
+      <div class="navbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <a href="dashboard.html" class="brand" style="text-decoration: none; color: #34d399;">SIMADES</a>
+      </div>
+      <div class="user-info">
+        <div class="user-detail">
+          <div class="user-name" id="userNameDisplay">Loading...</div>
+          <div class="user-jabatan" id="userJabatanDisplay">-</div>
+        </div>
+        <button class="btn-logout" onclick="logout()">Keluar</button>
+      </div>
+    </nav>
+
+    <div class="container" id="mainContainer"></div>
+    <div class="footer">&copy; 2026 Pemerintah Desa Sidomulyo</div>
+  </div>
+</div>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+
+<script>
+  const SUPA_URL = 'https://orqllypofnpsfxmavtgr.supabase.co';
+  const SUPA_KEY = 'sb_publishable_1olKTJsNxGp0LBBbBb8CMQ_fpTt2mgZ';
+  const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  let currentUser = { nama: '', jabatan: '', role: '', id: '', rt_id: null, dusun_id: null };
+  let currentMenu = 'list';
+  let editingKKId = null;
+  let daftarAnggotaSementara = [];
+  let editingAnggotaIndex = null;
+  let listDusun = [], listRT = [];
+
+  function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+
+  async function cekSesi() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { window.location.href = 'index.html'; return; }
+
+    const { data: profil } = await supabase
+      .from('data_pengguna')
+      .select('nama_pejabat, jabatan, role, id, rt_id, dusun_id')
+      .eq('auth_id', user.id)
+      .single();
+
+    if (!profil) {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+      return;
+    }
+
+    currentUser.nama = profil.nama_pejabat;
+    currentUser.jabatan = profil.jabatan;
+    currentUser.role = profil.role;
+    currentUser.id = profil.id;
+    currentUser.rt_id = profil.rt_id;
+    currentUser.dusun_id = profil.dusun_id;
+
+    document.getElementById('userNameDisplay').textContent = currentUser.nama;
+    document.getElementById('userJabatanDisplay').textContent = currentUser.jabatan;
+    document.getElementById('sidebarJabatan').textContent = currentUser.jabatan;
+
+    renderSidebar();
+    await loadMasterData();
+    renderListKK();
+  }
+
+  function renderSidebar() {
+    const sidebarMenu = document.getElementById('sidebarMenu');
+    let menuHtml = '';
+
+    if (currentUser.role === 'admin') {
+      menuHtml = `<a href="kelola-user.html" class="menu-item"><span>👑</span> <span>Kelola User</span></a>
+                  <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>`;
+    } else if (currentUser.role === 'pemdes') {
+      menuHtml = `<a href="kartu-keluarga.html" class="menu-item"><span>📋</span> <span>Kartu Keluarga</span></a>
+                  <a href="daftar-penduduk.html" class="menu-item"><span>👥</span> <span>Daftar Penduduk</span></a>
+                  <a href="surat.html" class="menu-item"><span>📝</span> <span>Surat Menyurat</span></a>
+                  <a href="pengaturan-desa.html" class="menu-item"><span>🏠</span> <span>Pengaturan Desa</span></a>
+                  <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>`;
+    } else if (currentUser.role === 'rt') {
+      menuHtml = `<a href="kartu-keluarga.html" class="menu-item"><span>📋</span> <span>Kartu Keluarga</span></a>
+                  <a href="daftar-penduduk.html" class="menu-item"><span>👥</span> <span>Daftar Penduduk</span></a>
+                  <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>`;
+    }
+    sidebarMenu.innerHTML = menuHtml;
+  }
+
+  async function loadMasterData() {
+    const { data: dusun } = await supabase.from('data_dusun').select('id, nomor_dusun, nama_dusun');
+    if (dusun) listDusun = dusun;
+    const { data: rt } = await supabase.from('data_rt').select('id, nomor_rt, dusun_id');
+    if (rt) listRT = rt;
+  }
+
+  function formatTanggalInput(value) {
+    let numbers = value.replace(/\D/g, '');
+    if (numbers.length > 8) numbers = numbers.slice(0, 8);
+    let formatted = '';
+    if (numbers.length > 0) formatted = numbers.slice(0, 2);
+    if (numbers.length >= 3) formatted += '/' + numbers.slice(2, 4);
+    if (numbers.length >= 5) formatted += '/' + numbers.slice(4, 8);
+    return formatted;
+  }
+  window.formatTanggalInput = formatTanggalInput;
+  function convertToDatabaseDate(tanggal) { if (!tanggal) return null; let parts = tanggal.split('/'); if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`; return null; }
+  function convertToDisplayDate(tanggalDb) { if (!tanggalDb) return ''; let parts = tanggalDb.split('-'); if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`; return tanggalDb; }
+
+  // ========== LIST KK ==========
+  async function renderListKK() {
+    const container = document.getElementById('mainContainer');
+    container.innerHTML = `
+      <div class="welcome-bar"><h2>Manajemen Kartu Keluarga</h2><p>Kelola KK dan anggota keluarga</p></div>
+      <div class="card">
+        <div class="card-header"><h3>📋 Daftar Kartu Keluarga</h3><button class="btn-primary" onclick="showFormKK()">+ Buat KK Baru</button></div>
+        <input type="text" id="searchKK" class="search-box" placeholder="🔍 Cari No. KK..." oninput="loadKKList()">
+        <div class="table-responsive"><table><thead><tr><th>No. KK</th><th>Dusun</th><th>RT / RW</th><th>Aksi</th></tr></thead><tbody id="kkListBody"><tr><td colspan="4" class="text-center">Memuat...</td</tbody></table></div>
+      </div>
+    `;
+    await loadKKList();
+  }
+
+  async function loadKKList() {
+    let query = supabase.from('kartu_keluarga').select(`*, data_dusun!dusun_id(nomor_dusun,nama_dusun), data_rt!rt_id(nomor_rt)`);
+    if (currentUser.role === 'rt' && currentUser.rt_id) {
+      query = query.eq('rt_id', currentUser.rt_id);
+    }
+    let { data } = await query.order('created_at', { ascending: false });
+    
+    const searchTerm = document.getElementById('searchKK')?.value.toLowerCase() || '';
+    if (searchTerm) data = data?.filter(kk => kk.no_kk.toLowerCase().includes(searchTerm)) || [];
+    
+    const tbody = document.getElementById('kkListBody');
+    if (!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center">Belum ada数据</td</tr>'; return; }
+    let html = '';
+    for (const kk of data) {
+      const dusun = kk.data_dusun;
+      const rt = kk.data_rt;
+      const rtDisplay = rt ? `${rt.nomor_rt} / ${dusun?.nomor_dusun || ''}` : '-';
+      const showActions = (currentUser.role === 'pemdes');
+      html += `<tr><td style="font-weight:600;">${kk.no_kk}</td><td>${dusun?.nama_dusun || '-'}</td><td>${rtDisplay}</td>`;
+      if (showActions) {
+        html += `<td class="action-group"><button class="btn-edit" onclick="editKK('${kk.id}')">Edit</button><button class="btn-danger" onclick="hapusKK('${kk.id}')">Hapus</button></td>`;
+      } else {
+        html += `<td>-</td>`;
+      }
+      html += `</tr>`;
+    }
+    tbody.innerHTML = html;
+  }
+
+  async function hapusKK(id) {
+    if (!confirm('Hapus KK ini? Semua anggota akan terhapus!')) return;
+    await supabase.from('kartu_keluarga').delete().eq('id', id);
+    await loadKKList();
+  }
+
+  async function showFormKK() {
+    editingKKId = null;
+    daftarAnggotaSementara = [];
+    editingAnggotaIndex = null;
+    await renderFormKK();
+  }
+
+  async function editKK(id) {
+    editingKKId = id;
+    const { data: kk } = await supabase.from('kartu_keluarga').select('*').eq('id', id).single();
+    const { data: anggota } = await supabase.from('anggota_keluarga').select('*').eq('kk_id', id);
+    daftarAnggotaSementara = anggota || [];
+    await renderFormKK(kk);
+  }
+
+  async function renderFormKK(kk = null) {
+    const isEdit = (kk !== null);
+    const isAdminOrPemdes = (currentUser.role === 'admin' || currentUser.role === 'pemdes');
+    const isReadOnly = (currentUser.role === 'rt');
+    
+    const container = document.getElementById('mainContainer');
+    
+    let dusunOptions = '';
+    if (isAdminOrPemdes) {
+      dusunOptions = listDusun.map(d => `<option value="${d.id}" ${kk && kk.dusun_id === d.id ? 'selected' : ''}>${d.nama_dusun}</option>`).join('');
+    }
+    
+    const dusunUser = listDusun.find(d => d.id === currentUser.dusun_id);
+    const rtUser = listRT.find(rt => rt.id === currentUser.rt_id);
+    
+    container.innerHTML = `
+      <div class="welcome-bar"><h2>${isEdit ? 'Edit Kartu Keluarga' : 'Tambah Kartu Keluarga'}</h2><p>Isi data KK dan anggota keluarga</p></div>
+      <div class="card">
+        <div class="form-group"><label>No. KK *</label><input type="text" id="noKK" class="numeric-input" inputmode="numeric" pattern="[0-9]*" value="${kk ? kk.no_kk : ''}" placeholder="Masukkan No. KK" oninput="this.value = this.value.toUpperCase()"></div>
+        <div class="form-row">
+          ${isAdminOrPemdes ? 
+            `<div class="form-group"><label>Dusun *</label><select id="dusunID" onchange="loadRTDropdown()"><option value="">Pilih Dusun</option>${dusunOptions}</select></div>
+             <div class="form-group"><label>RT *</label><select id="rtID"><option value="">Pilih RT</option></select></div>` :
+            `<div class="form-group"><label>Dusun</label><input type="text" id="dusunDisplay" value="${dusunUser ? dusunUser.nama_dusun : ''}" disabled></div>
+             <div class="form-group"><label>RT / RW</label><input type="text" id="rtDisplay" value="${rtUser ? `${rtUser.nomor_rt} / ${dusunUser?.nomor_dusun || ''}` : ''}" disabled></div>
+             <input type="hidden" id="dusunID" value="${currentUser.dusun_id}"><input type="hidden" id="rtID" value="${currentUser.rt_id}">`
+          }
+        </div>
+        <div class="form-row"><div class="form-group"><label>Kode Pos</label><input type="text" id="kodePos" value="${kk ? kk.kode_pos : '51162'}" oninput="this.value = this.value.toUpperCase()"></div>
+        <div class="form-group"><label>Desa</label><input type="text" id="desa" value="${kk ? kk.desa : 'SIDOMULYO'}" oninput="this.value = this.value.toUpperCase()"></div></div>
+        <div class="form-row"><div class="form-group"><label>Kecamatan</label><input type="text" id="kecamatan" value="${kk ? kk.kecamatan : 'KESESI'}" oninput="this.value = this.value.toUpperCase()"></div>
+        <div class="form-group"><label>Kabupaten</label><input type="text" id="kabupaten" value="${kk ? kk.kabupaten : 'PEKALONGAN'}" oninput="this.value = this.value.toUpperCase()"></div></div>
+        <div class="form-group"><label>Provinsi</label><input type="text" id="provinsi" value="${kk ? kk.provinsi : 'JAWA TENGAH'}" oninput="this.value = this.value.toUpperCase()"></div>
+      </div>
+      <div class="card">
+        <h3>👨‍👩‍👧 Daftar Anggota</h3>
+        <div class="table-responsive"><table class="anggota-table"><thead><tr><th>No</th><th>NIK</th><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="daftarAnggotaBody"></tbody></table></div>
+        <div class="mt-3"><h4>Tambah Anggota</h4>
+        <div class="form-group"><label>NIK *</label><input type="text" id="nikAnggota" class="numeric-input" inputmode="numeric" pattern="[0-9]*" maxlength="16" placeholder="16 digit" oninput="this.value = this.value.toUpperCase()"></div>
+        <div class="form-group"><label>Nama Lengkap *</label><input type="text" id="namaAnggota" placeholder="Nama lengkap" oninput="this.value = this.value.toUpperCase()"></div>
+        <div class="form-row"><div class="form-group"><label>Jenis Kelamin</label><select id="jkAnggota"><option value="LAKI-LAKI">Laki-laki</option><option value="PEREMPUAN">Perempuan</option></select></div>
+        <div class="form-group"><label>Tempat Lahir</label><input type="text" id="tempatLahirAnggota" oninput="this.value = this.value.toUpperCase()"></div></div>
+        <div class="form-group"><label>Tanggal Lahir</label><input type="text" id="tanggalLahirAnggota" placeholder="DD/MM/YYYY" maxlength="10" oninput="this.value = formatTanggalInput(this.value)"></div>
+        <div class="form-row"><div class="form-group"><label>Agama</label><input type="text" id="agamaAnggota" oninput="this.value = this.value.toUpperCase()"></div>
+        <div class="form-group"><label>Pendidikan</label><input type="text" id="pendidikanAnggota" oninput="this.value = this.value.toUpperCase()"></div></div>
+        <div class="form-row"><div class="form-group"><label>Pekerjaan</label><input type="text" id="pekerjaanAnggota" oninput="this.value = this.value.toUpperCase()"></div>
+        <div class="form-group"><label>Status Perkawinan</label><select id="statusKawinAnggota"><option value="BELUM KAWIN">Belum Kawin</option><option value="KAWIN">Kawin</option><option value="CERAI HIDUP">Cerai Hidup</option><option value="CERAI MATI">Cerai Mati</option></select></div></div>
+        <div class="form-row"><div class="form-group"><label>Kewarganegaraan</label><input type="text" id="kewarganegaraanAnggota" value="WNI" oninput="this.value = this.value.toUpperCase()"></div>
+        <div class="form-group"><label>Status Warga</label><select id="statusWargaAnggota"><option value="AKTIF">Aktif</option><option value="PINDAH">Pindah</option><option value="MENINGGAL">Meninggal</option></select></div></div>
+        <div class="action-group mt-3"><button class="btn-primary" onclick="tambahKeDaftar()">+ Tambah ke Daftar</button><button class="btn-secondary" onclick="resetFormAnggota()">Reset</button></div></div>
+        <div class="action-group mt-3"><button class="btn-secondary" onclick="renderListKK()">Batal</button><button class="btn-primary" onclick="simpanKK()">💾 Simpan KK & Anggota</button></div>
+      </div>
+    `;
+    if (isAdminOrPemdes && kk) {
+      document.getElementById('dusunID').value = kk.dusun_id;
+      await loadRTDropdown(kk.dusun_id, kk.rt_id);
+    }
+    renderDaftarAnggotaTable();
+  }
+
+  async function loadRTDropdown(dusunId = null, selectedRtId = null) {
+    const dusunID = dusunId || document.getElementById('dusunID')?.value;
+    if (!dusunID) return;
+    const dusun = listDusun.find(d => d.id === dusunID);
+    const filteredRT = listRT.filter(rt => rt.dusun_id === dusunID);
+    const select = document.getElementById('rtID');
+    select.innerHTML = '<option value="">Pilih RT</option>';
+    filteredRT.forEach(rt => { select.innerHTML += `<option value="${rt.id}" ${selectedRtId === rt.id ? 'selected' : ''}>${rt.nomor_rt} / ${dusun?.nomor_dusun || ''}</option>`; });
+  }
+
+  function renderDaftarAnggotaTable() {
+    const tbody = document.getElementById('daftarAnggotaBody');
+    if (!tbody) return;
+    const isAdminOrPemdes = (currentUser.role === 'admin' || currentUser.role === 'pemdes');
+    if (daftarAnggotaSementara.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center">Belum ada anggota</td</tr>'; return; }
+    let html = '';
+    daftarAnggotaSementara.forEach((a, idx) => {
+      let statusClass = a.status_warga === 'AKTIF' ? 'status-aktif' : (a.status_warga === 'PINDAH' ? 'status-pindah' : 'status-meninggal');
+      html += `<tr><td>${idx+1}</td><td>${a.nik}</td><td>${a.nama_lengkap}</td><td><span class="status-badge ${statusClass}">${a.status_warga}</span></td>`;
+      if (isAdminOrPemdes) {
+        html += `<td class="action-group"><button class="btn-edit" onclick="editAnggotaDaftar(${idx})">Edit</button><button class="btn-danger" onclick="hapusAnggotaDaftar(${idx})">Hapus</button></td>`;
+      } else {
+        html += `<td>-</td>`;
+      }
+      html += `</tr>`;
+    });
+    tbody.innerHTML = html;
+  }
+
+  function tambahKeDaftar() {
+    const nik = document.getElementById('nikAnggota')?.value.trim();
+    const nama = document.getElementById('namaAnggota')?.value.trim();
+    if (!nik || nik.length !== 16) { alert('NIK harus 16 digit'); return; }
+    if (!nama) { alert('Nama harus diisi'); return; }
+    const tglLahirDisplay = document.getElementById('tanggalLahirAnggota')?.value || '';
+    const tglLahirDb = convertToDatabaseDate(tglLahirDisplay);
+    const anggotaBaru = {
+      nik, nama_lengkap: nama,
+      jenis_kelamin: document.getElementById('jkAnggota')?.value,
+      tempat_lahir: document.getElementById('tempatLahirAnggota')?.value || null,
+      tanggal_lahir: tglLahirDb,
+      agama: document.getElementById('agamaAnggota')?.value || null,
+      pendidikan: document.getElementById('pendidikanAnggota')?.value || null,
+      pekerjaan: document.getElementById('pekerjaanAnggota')?.value || null,
+      status_perkawinan: document.getElementById('statusKawinAnggota')?.value,
+      kewarganegaraan: document.getElementById('kewarganegaraanAnggota')?.value || 'WNI',
+      status_warga: document.getElementById('statusWargaAnggota')?.value
+    };
+    if (editingAnggotaIndex !== null) daftarAnggotaSementara[editingAnggotaIndex] = anggotaBaru;
+    else daftarAnggotaSementara.push(anggotaBaru);
+    editingAnggotaIndex = null;
+    renderDaftarAnggotaTable();
+    resetFormAnggota();
+  }
+
+  function editAnggotaDaftar(idx) { const a = daftarAnggotaSementara[idx]; document.getElementById('nikAnggota').value = a.nik; document.getElementById('namaAnggota').value = a.nama_lengkap; document.getElementById('jkAnggota').value = a.jenis_kelamin; document.getElementById('tempatLahirAnggota').value = a.tempat_lahir || ''; document.getElementById('tanggalLahirAnggota').value = convertToDisplayDate(a.tanggal_lahir); document.getElementById('agamaAnggota').value = a.agama || ''; document.getElementById('pendidikanAnggota').value = a.pendidikan || ''; document.getElementById('pekerjaanAnggota').value = a.pekerjaan || ''; document.getElementById('statusKawinAnggota').value = a.status_perkawinan || 'BELUM KAWIN'; document.getElementById('kewarganegaraanAnggota').value = a.kewarganegaraan || 'WNI'; document.getElementById('statusWargaAnggota').value = a.status_warga || 'AKTIF'; editingAnggotaIndex = idx; }
+  function hapusAnggotaDaftar(idx) { daftarAnggotaSementara.splice(idx, 1); renderDaftarAnggotaTable(); }
+  function resetFormAnggota() {
+    document.getElementById('nikAnggota').value = '';
+    document.getElementById('namaAnggota').value = '';
+    document.getElementById('jkAnggota').value = 'LAKI-LAKI';
+    document.getElementById('tempatLahirAnggota').value = '';
+    document.getElementById('tanggalLahirAnggota').value = '';
+    document.getElementById('agamaAnggota').value = '';
+    document.getElementById('pendidikanAnggota').value = '';
+    document.getElementById('pekerjaanAnggota').value = '';
+    document.getElementById('statusKawinAnggota').value = 'BELUM KAWIN';
+    document.getElementById('kewarganegaraanAnggota').value = 'WNI';
+    document.getElementById('statusWargaAnggota').value = 'AKTIF';
+    editingAnggotaIndex = null;
+  }
+
+  async function simpanKK() {
+    const noKK = document.getElementById('noKK')?.value.trim();
+    let dusunId, rtId;
+    if (currentUser.role === 'rt') {
+      dusunId = currentUser.dusun_id;
+      rtId = currentUser.rt_id;
+    } else {
+      dusunId = document.getElementById('dusunID')?.value;
+      rtId = document.getElementById('rtID')?.value;
+    }
+    if (!noKK || !dusunId || !rtId) { alert('Isi semua data KK'); return; }
+    const dataKK = {
+      no_kk: noKK, dusun_id: dusunId, rt_id: rtId,
+      kode_pos: document.getElementById('kodePos')?.value,
+      desa: document.getElementById('desa')?.value,
+      kecamatan: document.getElementById('kecamatan')?.value,
+      kabupaten: document.getElementById('kabupaten')?.value,
+      provinsi: document.getElementById('provinsi')?.value
+    };
+    let kkId = editingKKId;
+    if (kkId) {
+      await supabase.from('kartu_keluarga').update(dataKK).eq('id', kkId);
+      await supabase.from('anggota_keluarga').delete().eq('kk_id', kkId);
+    } else {
+      const { data } = await supabase.from('kartu_keluarga').insert(dataKK).select();
+      if (data) kkId = data[0].id;
+    }
+    if (kkId && daftarAnggotaSementara.length) {
+      const anggotaWithKK = daftarAnggotaSementara.map(a => ({ ...a, kk_id: kkId }));
+      await supabase.from('anggota_keluarga').insert(anggotaWithKK);
+    }
+    alert('Data tersimpan!');
+    renderListKK();
+  }
+
+  async function logout() { if (confirm('Yakin keluar?')) { await supabase.auth.signOut(); window.location.href = 'index.html'; } }
+  document.addEventListener('DOMContentLoaded', cekSesi);
+</script>
+</body>
+</html>

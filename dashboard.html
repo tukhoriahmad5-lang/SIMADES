@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>SIMADES SIDOMULYO — Dashboard</title>
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-gradient-start: #e0f2fe;
+      --bg-gradient-end: #f0fdf4;
+      --sidebar-bg: #064e3b;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --primary: #059669;
+      --primary-hover: #047857;
+      --primary-light: #d1fae5;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --input-bg: #ffffff;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+    }
+
+    .app-container { display: flex; min-height: 100vh; }
+
+    /* Sidebar - Tema Cerah */
+    .sidebar {
+      width: 280px;
+      background: var(--sidebar-bg);
+      color: #e2e8f0;
+      position: fixed;
+      top: 0;
+      left: -280px;
+      height: 100vh;
+      transition: left 0.3s ease;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-lg);
+    }
+    .sidebar.open { left: 0; }
+    .sidebar-header { padding: 24px 20px; border-bottom: 1px solid #2d6a4f; }
+    .sidebar-header h3 { color: #34d399; font-size: 20px; }
+    .sidebar-header p { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .sidebar-menu { flex: 1; padding: 20px 0; }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+      color: #cbd5e1;
+      text-decoration: none;
+    }
+    .menu-item:hover { background: #2d6a4f; color: #34d399; }
+    .menu-item span:first-child { font-size: 20px; }
+    .sidebar-footer { padding: 20px; border-top: 1px solid #2d6a4f; font-size: 12px; color: #94a3b8; }
+
+    /* Main Content */
+    .main-content { flex: 1; width: 100%; min-height: 100vh; }
+
+    /* Navbar - Tema Cerah */
+    .navbar {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    .navbar-left { display: flex; align-items: center; gap: 16px; }
+    .menu-toggle { background: none; border: none; color: var(--primary); font-size: 24px; cursor: pointer; padding: 8px; }
+    .brand { 
+      font-weight: 800; 
+      font-size: 18px; 
+      color: var(--primary); 
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .brand:hover {
+      color: var(--primary-hover);
+      text-decoration: underline;
+    }
+    .user-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .user-detail { text-align: right; }
+    .user-name { color: #1f2937; font-size: 14px; font-weight: 600; }
+    .user-jabatan { color: #6b7280; font-size: 11px; }
+    .btn-logout { 
+      background: transparent; 
+      border: 1px solid var(--border); 
+      color: #4b5563; 
+      padding: 8px 16px; 
+      border-radius: 12px; 
+      font-size: 13px; 
+      font-weight: 600; 
+      cursor: pointer; 
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { background: var(--danger); border-color: var(--danger); color: #ffffff; }
+
+    /* Container */
+    .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+    .welcome-bar { margin-bottom: 20px; }
+    .welcome-bar h2 { color: #064e3b; font-size: 20px; font-weight: 700; }
+    .welcome-bar p { color: #475569; font-size: 13px; margin-top: 4px; }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: var(--shadow-md);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      transition: transform 0.2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    .stat-number {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .footer { text-align: center; padding: 16px; color: #6b7280; font-size: 11px; }
+    .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+    .overlay.show { display: block; }
+
+    @media (min-width: 768px) {
+      .sidebar { position: relative; left: 0; width: 260px; }
+      .menu-toggle { display: none; }
+    }
+    @media (max-width: 768px) {
+      .user-detail { text-align: left; }
+      .navbar { flex-direction: row; justify-content: space-between; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header"><h3>SIMADES</h3><p>Desa Sidomulyo</p></div>
+    <div class="sidebar-menu" id="sidebarMenu"></div>
+    <div class="sidebar-footer"><span id="sidebarJabatan">Loading...</span></div>
+  </div>
+
+  <div class="main-content">
+    <nav class="navbar">
+      <div class="navbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <a href="dashboard.html" class="brand">SIMADES</a>
+      </div>
+      <div class="user-info">
+        <div class="user-detail">
+          <div class="user-name" id="userNameDisplay">Loading...</div>
+          <div class="user-jabatan" id="userJabatanDisplay">-</div>
+        </div>
+        <button class="btn-logout" onclick="logout()">Keluar</button>
+      </div>
+    </nav>
+
+    <div class="container" id="mainContainer"></div>
+    <div class="footer">&copy; 2026 Pemerintah Desa Sidomulyo</div>
+  </div>
+</div>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+
+<script>
+  const SUPA_URL = 'https://orqllypofnpsfxmavtgr.supabase.co';
+  const SUPA_KEY = 'sb_publishable_1olKTJsNxGp0LBBbBb8CMQ_fpTt2mgZ';
+  const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  let currentUser = { nama: '', jabatan: '', role: '', id: '', rt_id: null };
+
+  function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+
+  async function cekSesi() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { window.location.href = 'index.html'; return; }
+
+    const { data: profil } = await supabase
+      .from('data_pengguna')
+      .select('nama_pejabat, jabatan, role, id, rt_id')
+      .eq('auth_id', user.id)
+      .single();
+
+    if (!profil) {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+      return;
+    }
+
+    currentUser.nama = profil.nama_pejabat;
+    currentUser.jabatan = profil.jabatan;
+    currentUser.role = profil.role;
+    currentUser.id = profil.id;
+    currentUser.rt_id = profil.rt_id;
+
+    document.getElementById('userNameDisplay').textContent = currentUser.nama;
+    document.getElementById('userJabatanDisplay').textContent = currentUser.jabatan;
+    document.getElementById('sidebarJabatan').textContent = currentUser.jabatan;
+
+    renderSidebar();
+    renderDashboard();
+  }
+
+  function renderSidebar() {
+    const sidebarMenu = document.getElementById('sidebarMenu');
+    let menuHtml = '';
+
+    if (currentUser.role === 'admin') {
+      menuHtml = `<a href="kelola-user.html" class="menu-item"><span>👑</span> <span>Kelola User</span></a>
+                  <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>`;
+    } else if (currentUser.role === 'pemdes') {
+      menuHtml = `<a href="kartu-keluarga.html" class="menu-item"><span>📋</span> <span>Kartu Keluarga</span></a>
+                  <a href="daftar-penduduk.html" class="menu-item"><span>👥</span> <span>Daftar Penduduk</span></a>
+                  <a href="surat.html" class="menu-item"><span>📝</span> <span>Surat Menyurat</span></a>
+                  <a href="pengaturan-desa.html" class="menu-item"><span>🏠</span> <span>Pengaturan Desa</span></a>
+                  <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>`;
+    } else if (currentUser.role === 'rt') {
+      menuHtml = `<a href="kartu-keluarga.html" class="menu-item"><span>📋</span> <span>Kartu Keluarga</span></a>
+                  <a href="daftar-penduduk.html" class="menu-item"><span>👥</span> <span>Daftar Penduduk</span></a>
+                  <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>`;
+    }
+    sidebarMenu.innerHTML = menuHtml;
+  }
+
+  function renderDashboard() {
+    const container = document.getElementById('mainContainer');
+    
+    if (currentUser.role === 'admin') {
+      container.innerHTML = `
+        <div class="welcome-bar">
+          <h2>Selamat datang, ${currentUser.nama}!</h2>
+          <p>Anda login sebagai Administrator</p>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-number" id="statUser">0</div><div class="stat-label">Total Pengguna</div></div>
+        </div>
+      `;
+      loadStatistikAdmin();
+    } else if (currentUser.role === 'pemdes') {
+      container.innerHTML = `
+        <div class="welcome-bar">
+          <h2>Selamat datang, ${currentUser.nama}!</h2>
+          <p>Anda login sebagai ${currentUser.jabatan}</p>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-number" id="statKK">0</div><div class="stat-label">Total KK</div></div>
+          <div class="stat-card"><div class="stat-number" id="statWarga">0</div><div class="stat-label">Total Warga</div></div>
+          <div class="stat-card"><div class="stat-number" id="statLaki">0</div><div class="stat-label">Laki-laki</div></div>
+          <div class="stat-card"><div class="stat-number" id="statPerempuan">0</div><div class="stat-label">Perempuan</div></div>
+          <div class="stat-card"><div class="stat-number" id="statSurat">0</div><div class="stat-label">Total Surat</div></div>
+        </div>
+      `;
+      loadStatistikPemdes();
+    } else if (currentUser.role === 'rt') {
+      container.innerHTML = `
+        <div class="welcome-bar">
+          <h2>Selamat datang, ${currentUser.nama}!</h2>
+          <p>Anda login sebagai ${currentUser.jabatan}</p>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-number" id="statKK">0</div><div class="stat-label">Total KK (RT ini)</div></div>
+          <div class="stat-card"><div class="stat-number" id="statWarga">0</div><div class="stat-label">Total Warga (RT ini)</div></div>
+          <div class="stat-card"><div class="stat-number" id="statLaki">0</div><div class="stat-label">Laki-laki</div></div>
+          <div class="stat-card"><div class="stat-number" id="statPerempuan">0</div><div class="stat-label">Perempuan</div></div>
+        </div>
+      `;
+      loadStatistikRt();
+    }
+  }
+
+  async function loadStatistikAdmin() {
+    const { count } = await supabase.from('data_pengguna').select('*', { count: 'exact', head: true });
+    document.getElementById('statUser').textContent = count || 0;
+  }
+
+  async function loadStatistikPemdes() {
+    const { count: countKK } = await supabase.from('kartu_keluarga').select('*', { count: 'exact', head: true });
+    document.getElementById('statKK').textContent = countKK || 0;
+    
+    const { count: countWarga } = await supabase.from('anggota_keluarga').select('*', { count: 'exact', head: true });
+    document.getElementById('statWarga').textContent = countWarga || 0;
+    
+    const { count: countLaki } = await supabase.from('anggota_keluarga').select('*', { count: 'exact', head: true }).eq('jenis_kelamin', 'LAKI-LAKI');
+    document.getElementById('statLaki').textContent = countLaki || 0;
+    
+    const { count: countPerempuan } = await supabase.from('anggota_keluarga').select('*', { count: 'exact', head: true }).eq('jenis_kelamin', 'PEREMPUAN');
+    document.getElementById('statPerempuan').textContent = countPerempuan || 0;
+    
+    const { count: countSurat } = await supabase.from('data_surat').select('*', { count: 'exact', head: true });
+    document.getElementById('statSurat').textContent = countSurat || 0;
+  }
+
+  async function loadStatistikRt() {
+    const { data: kkList } = await supabase.from('kartu_keluarga').select('id').eq('rt_id', currentUser.rt_id);
+    const kkIds = kkList?.map(k => k.id) || [];
+    
+    document.getElementById('statKK').textContent = kkIds.length || 0;
+    
+    if (kkIds.length > 0) {
+      const { data: warga } = await supabase.from('anggota_keluarga').select('jenis_kelamin').in('kk_id', kkIds);
+      const countWarga = warga?.length || 0;
+      const countLaki = warga?.filter(w => w.jenis_kelamin === 'LAKI-LAKI').length || 0;
+      const countPerempuan = countWarga - countLaki;
+      
+      document.getElementById('statWarga').textContent = countWarga;
+      document.getElementById('statLaki').textContent = countLaki;
+      document.getElementById('statPerempuan').textContent = countPerempuan;
+    } else {
+      document.getElementById('statWarga').textContent = 0;
+      document.getElementById('statLaki').textContent = 0;
+      document.getElementById('statPerempuan').textContent = 0;
+    }
+  }
+
+  async function logout() { if (confirm('Yakin keluar?')) { await supabase.auth.signOut(); window.location.href = 'index.html'; } }
+
+  document.addEventListener('DOMContentLoaded', cekSesi);
+</script>
+</body>
+</html>

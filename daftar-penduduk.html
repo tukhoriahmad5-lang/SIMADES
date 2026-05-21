@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+  <title>SIMADES SIDOMULYO — Daftar Penduduk</title>
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f172a;
+      --sidebar-bg: #1e293b;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --primary: #059669;
+      --primary-hover: #047857;
+      --border: #cbd5e1;
+      --danger: #ef4444;
+      --input-bg: #f8fafc;
+    }
+
+    body {
+      background-color: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+
+    .app-container { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--sidebar-bg);
+      color: #e2e8f0;
+      position: fixed;
+      top: 0;
+      left: -280px;
+      height: 100vh;
+      transition: left 0.3s ease;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+    }
+    .sidebar.open { left: 0; }
+    .sidebar-header { padding: 24px 20px; border-bottom: 1px solid #334155; }
+    .sidebar-header h3 { color: #34d399; font-size: 20px; }
+    .sidebar-header p { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+    .sidebar-menu { flex: 1; padding: 20px 0; }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+      color: #cbd5e1;
+      text-decoration: none;
+    }
+    .menu-item:hover { background: #334155; color: #34d399; }
+    .menu-item span:first-child { font-size: 20px; }
+    .sidebar-footer { padding: 20px; border-top: 1px solid #334155; font-size: 12px; color: #64748b; }
+
+    /* Main Content */
+    .main-content { flex: 1; width: 100%; min-height: 100vh; }
+
+    /* Navbar */
+    .navbar {
+      background: #1e293b;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .navbar-left { display: flex; align-items: center; gap: 16px; }
+    .menu-toggle { background: none; border: none; color: #34d399; font-size: 24px; cursor: pointer; padding: 8px; }
+    .brand { font-weight: 800; font-size: 18px; color: #34d399; }
+    .user-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .user-detail { text-align: right; }
+    .user-name { color: #e2e8f0; font-size: 14px; font-weight: 600; }
+    .user-jabatan { color: #94a3b8; font-size: 11px; }
+    .btn-logout { background: transparent; border: 1px solid #475569; color: #cbd5e1; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-logout:hover { background: var(--danger); border-color: var(--danger); color: #ffffff; }
+
+    /* Container */
+    .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+    .welcome-bar { margin-bottom: 20px; }
+    .welcome-bar h2 { color: #ffffff; font-size: 20px; font-weight: 700; }
+    .welcome-bar p { color: #94a3b8; font-size: 13px; margin-top: 4px; }
+
+    /* Card */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .card-header { margin-bottom: 16px; }
+    .card-header h3 { font-size: 16px; font-weight: 700; }
+
+    /* Search */
+    .search-box {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    /* Tables */
+    .table-responsive { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+    th { background: #f8fafc; color: var(--text-muted); font-weight: 600; }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .status-aktif { background: #d1fae5; color: #059669; }
+    .status-pindah { background: #fed7aa; color: #c2410c; }
+    .status-meninggal { background: #fee2e2; color: #dc2626; }
+
+    .btn-view {
+      background: #e0f2fe;
+      border: 1px solid #bae6fd;
+      color: #0284c7;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-view:hover { background: #0284c7; color: white; border-color: #0284c7; }
+
+    .footer { text-align: center; padding: 16px; color: #64748b; font-size: 11px; }
+    .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+    .overlay.show { display: block; }
+
+    @media (min-width: 768px) {
+      .sidebar { position: relative; left: 0; width: 260px; }
+      .menu-toggle { display: none; }
+    }
+    @media (max-width: 768px) {
+      .user-detail { text-align: left; }
+      .navbar { flex-direction: row; justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header"><h3>SIMADES</h3><p>Desa Sidomulyo</p></div>
+    <div class="sidebar-menu" id="sidebarMenu"></div>
+    <div class="sidebar-footer"><span id="sidebarJabatan">Loading...</span></div>
+  </div>
+
+  <div class="main-content">
+    <nav class="navbar">
+      <div class="navbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+        <a href="dashboard.html" class="brand" style="text-decoration: none; color: #34d399;">SIMADES</a>
+      </div>
+      <div class="user-info">
+        <div class="user-detail">
+          <div class="user-name" id="userNameDisplay">Loading...</div>
+          <div class="user-jabatan" id="userJabatanDisplay">-</div>
+        </div>
+        <button class="btn-logout" onclick="logout()">Keluar</button>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="welcome-bar">
+        <h2>Daftar Penduduk</h2>
+        <p>Semua warga Desa Sidomulyo</p>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>👥 Data Warga</h3></div>
+        <input type="text" id="searchWarga" class="search-box" placeholder="🔍 Cari NIK / Nama..." oninput="loadWargaList()">
+        <div class="table-responsive">
+          <table id="tabelWarga">
+            <thead>
+              <tr><th>NIK</th><th>Nama</th><th>JK</th><th>Pekerjaan</th><th>Status</th><th>Aksi</th></tr>
+            </thead>
+            <tbody id="wargaListBody"><tr><td colspan="6" class="text-center">Memuat...</td</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="footer">&copy; 2026 Pemerintah Desa Sidomulyo</div>
+  </div>
+</div>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+
+<script>
+  const SUPA_URL = 'https://orqllypofnpsfxmavtgr.supabase.co';
+  const SUPA_KEY = 'sb_publishable_1olKTJsNxGp0LBBbBb8CMQ_fpTt2mgZ';
+  const supabase = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  let currentUser = { nama: '', jabatan: '', role: '', id: '', rt_id: null };
+
+  function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+
+  async function cekSesi() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { window.location.href = 'index.html'; return; }
+
+    const { data: profil } = await supabase
+      .from('data_pengguna')
+      .select('nama_pejabat, jabatan, role, id, rt_id')
+      .eq('auth_id', user.id)
+      .single();
+
+    if (!profil) {
+      await supabase.auth.signOut();
+      window.location.href = 'index.html';
+      return;
+    }
+
+    currentUser.nama = profil.nama_pejabat;
+    currentUser.jabatan = profil.jabatan;
+    currentUser.role = profil.role;
+    currentUser.id = profil.id;
+    currentUser.rt_id = profil.rt_id;
+
+    document.getElementById('userNameDisplay').textContent = currentUser.nama;
+    document.getElementById('userJabatanDisplay').textContent = currentUser.jabatan;
+    document.getElementById('sidebarJabatan').textContent = currentUser.jabatan;
+
+    renderSidebar();
+    await loadWargaList();
+  }
+
+  function renderSidebar() {
+    const sidebarMenu = document.getElementById('sidebarMenu');
+    let menuHtml = '';
+
+    if (currentUser.role === 'admin') {
+      menuHtml = `<a href="kelola-user.html" class="menu-item"><span>👑</span> <span>Kelola User</span></a>
+                  <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>`;
+    } else if (currentUser.role === 'pemdes') {
+      menuHtml = `<a href="kartu-keluarga.html" class="menu-item"><span>📋</span> <span>Kartu Keluarga</span></a>
+                  <a href="daftar-penduduk.html" class="menu-item"><span>👥</span> <span>Daftar Penduduk</span></a>
+                  <a href="surat.html" class="menu-item"><span>📝</span> <span>Surat Menyurat</span></a>
+                  <a href="pengaturan-desa.html" class="menu-item"><span>🏠</span> <span>Pengaturan Desa</span></a>
+                  <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>`;
+    } else if (currentUser.role === 'rt') {
+      menuHtml = `<a href="kartu-keluarga.html" class="menu-item"><span>📋</span> <span>Kartu Keluarga</span></a>
+                  <a href="daftar-penduduk.html" class="menu-item"><span>👥</span> <span>Daftar Penduduk</span></a>
+                  <a href="ganti-password.html" class="menu-item"><span>🔑</span> <span>Ganti Password</span></a>`;
+    }
+    sidebarMenu.innerHTML = menuHtml;
+  }
+
+  async function loadWargaList() {
+    let data = [];
+    const search = document.getElementById('searchWarga')?.value.toLowerCase() || '';
+
+    if (currentUser.role === 'rt' && currentUser.rt_id) {
+      // Ambil semua KK di RT ini
+      const { data: kkList } = await supabase.from('kartu_keluarga').select('id').eq('rt_id', currentUser.rt_id);
+      const kkIds = kkList?.map(k => k.id) || [];
+      if (kkIds.length > 0) {
+        const { data: warga } = await supabase.from('anggota_keluarga').select('*').in('kk_id', kkIds);
+        data = warga || [];
+      } else {
+        data = [];
+      }
+    } else {
+      const { data: warga } = await supabase.from('anggota_keluarga').select('*');
+      data = warga || [];
+    }
+
+    if (search) {
+      data = data.filter(w => 
+        w.nik.includes(search) || 
+        (w.nama_lengkap && w.nama_lengkap.toLowerCase().includes(search))
+      );
+    }
+
+    renderWargaTable(data);
+  }
+
+  function renderWargaTable(warga) {
+    const tbody = document.getElementById('wargaListBody');
+    if (!tbody) return;
+    if (!warga.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center">Belum ada data</td</tr>'; return; }
+
+    let html = '';
+    warga.forEach(w => {
+      let statusClass = '';
+      if (w.status_warga === 'AKTIF') statusClass = 'status-aktif';
+      else if (w.status_warga === 'PINDAH') statusClass = 'status-pindah';
+      else statusClass = 'status-meninggal';
+      
+      html += `<tr>
+        <td><strong>${w.nik}</strong></td>
+        <td>${w.nama_lengkap || '-'}</td>
+        <td>${w.jenis_kelamin === 'LAKI-LAKI' ? 'Laki-laki' : 'Perempuan'}</td>
+        <td>${w.pekerjaan || '-'}</td>
+        <td><span class="status-badge ${statusClass}">${w.status_warga}</span></td>
+        <td><button class="btn-view" onclick="lihatKK('${w.nik}')">🔍 Lihat KK</button></td>
+      </td>`;
+    });
+    tbody.innerHTML = html;
+  }
+
+  async function lihatKK(nik) {
+    // Cari warga berdasarkan NIK
+    const { data: warga } = await supabase.from('anggota_keluarga').select('kk_id').eq('nik', nik).single();
+    if (!warga) { alert('Warga tidak ditemukan'); return; }
+    
+    // Simpan kk_id ke localStorage agar kartu-keluarga.html bisa langsung edit
+    localStorage.setItem('edit_kk_id', warga.kk_id);
+    window.location.href = 'kartu-keluarga.html';
+  }
+
+  async function logout() { if (confirm('Yakin keluar?')) { await supabase.auth.signOut(); window.location.href = 'index.html'; } }
+
+  document.addEventListener('DOMContentLoaded', cekSesi);
+</script>
+</body>
+</html>
