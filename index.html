@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#2563EB">
+  <title>SIMADES — Desa Sidomulyo</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgZmlsbD0iIzI1NjNFQiIvPjx0ZXh0IHg9Ijk2IiB5PSIxMjAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9Ijc2IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iI0ZGRkZGRiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+U0Q8L3RleHQ+PC9zdmc+">
+
+  <!-- Tailwind CSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<!-- ============================================
+     HEADER
+     ============================================ -->
+<header class="sticky top-0 z-30 bg-white border-b border-gray-200">
+  <div class="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between gap-3">
+    <div class="min-w-0">
+      <h1 class="text-base font-semibold text-gray-900 leading-tight">SIMADES</h1>
+      <p class="text-[11px] text-gray-500 leading-tight">Desa Sidomulyo</p>
+    </div>
+    
+    <button id="tombolLogin" class="btn-secondary text-xs px-4 py-1.5 h-auto min-h-0">Login</button>
+    
+    <div id="userMenu" class="hidden relative">
+      <button id="tombolUser" class="btn-secondary text-xs px-3 py-1.5 h-auto min-h-0 flex items-center gap-2">
+        <span id="namaUser">User</span>
+        <span id="roleUser" class="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">Role</span>
+      </button>
+      
+      <div id="dropdownUser" class="hidden absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[180px] z-30">
+        <!-- Menu Khusus Kades: Ubah Nama Sekdes & Bendahara -->
+        <button id="menuUbahNamaSekdes" class="hidden block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+          Ubah Nama Sekdes
+        </button>
+        <button id="menuUbahNamaBendahara" class="hidden block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+          Ubah Nama Bendahara
+        </button>
+        
+        <!-- Menu Umum: Ubah Password -->
+        <button id="menuUbahPassword" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+          Ubah Password
+        </button>
+        
+        <div class="border-t border-gray-100 my-1"></div>
+        
+        <!-- Menu Logout -->
+        <button id="tombolLogout" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================
+     KONTEN UTAMA
+     ============================================ -->
+<main class="max-w-4xl mx-auto w-full h-[calc(100vh-55px)] flex flex-col">
+  
+  <!-- BAGIAN ATAS -->
+  <div class="px-3 pt-3 pb-2 flex-shrink-0 bg-white z-10 border-b border-gray-200 shadow-sm">
+    <section class="mb-3">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xs font-semibold text-gray-900">Rekap Tahun</h2>
+        
+        <div class="flex items-center gap-1.5">
+          <button id="tombolTambahTahun" class="hidden btn-primary text-[10px] px-2 py-1 h-auto min-h-0">+ Tahun</button>
+          <button id="tombolTambahKegiatan" class="hidden btn-secondary text-[10px] px-2 py-1 h-auto min-h-0 bg-white">+ Kegiatan</button>
+          <button id="tombolHapusTahun" class="hidden btn-secondary text-[10px] px-2 py-1 h-auto min-h-0 bg-red-50 text-red-600 border-red-200">Hapus Tahun</button>
+          
+          <select id="pilihTahun" class="text-xs border border-gray-300 rounded-md px-2 py-1 bg-white">
+            <option value="">Memuat...</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="rekapContainer" class="grid grid-cols-3 gap-1.5 sm:gap-2"></div>
+    </section>
+
+    <section>
+      <div class="flex gap-1.5">
+        <div class="relative flex-1">
+          <input type="text" id="inputCari" placeholder="Cari kegiatan..." class="w-full border border-gray-300 rounded-lg pl-2 pr-14 py-1.5 text-xs bg-white" autocomplete="off">
+          <button id="tombolHapusCari" class="hidden absolute right-1 top-1 bottom-1 px-2 text-[10px] font-medium text-gray-500 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded" style="min-height: auto;">Hapus</button>
+          <div id="suggestBox" class="suggest-box hidden"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- BAGIAN BAWAH -->
+  <div class="flex-1 overflow-y-auto px-3 py-3 bg-gray-50/50">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-xs font-semibold text-gray-900">
+        Daftar Kegiatan <span id="jumlahKegiatan" class="text-gray-500 font-normal"></span>
+      </h2>
+    </div>
+    <div id="daftarKegiatan" class="space-y-2 pb-10">
+      <div class="loading-teks">Memuat data kegiatan...</div>
+    </div>
+  </div>
+</main>
+
+<!-- ============================================
+     MODAL: DETAIL RKP & HISTORY TRANSAKSI
+     ============================================ -->
+<div id="modalDetailRkp" class="modal-overlay">
+  <div class="modal-box max-h-[90vh] w-full max-w-2xl p-0 flex flex-col overflow-hidden">
+    
+    <!-- HEADER MODAL (STICKY) -->
+    <div class="p-4 border-b border-gray-200 bg-white shrink-0">
+      <div class="flex justify-between items-start mb-2">
+        <div>
+          <span id="detailKategori" class="inline-block px-2 py-0.5 text-[10px] font-bold uppercase rounded border mb-1">Kategori</span>
+          <h2 id="detailNamaKegiatan" class="text-lg font-bold text-gray-900 leading-tight">Nama Kegiatan</h2>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <button id="tombolEditKegiatanModal" class="hidden btn-secondary text-xs px-3 py-1 bg-blue-50 text-blue-700 border-blue-200">Edit</button>
+          <button id="tombolHapusKegiatanModal" class="hidden btn-secondary text-xs px-3 py-1 bg-red-50 text-red-700 border-red-200">Hapus</button>
+          <button id="tutupDetailRkp" class="btn-secondary text-xs px-3 py-1">Tutup</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 text-xs bg-gray-50 p-2 rounded border border-gray-100 mt-3">
+        <div>
+          <div class="text-gray-500">Pagu Anggaran:</div>
+          <div id="detailPagu" class="font-bold text-gray-800 text-sm">Rp 0</div>
+        </div>
+        <div>
+          <div class="text-gray-500">Realisasi:</div>
+          <div id="detailRealisasi" class="font-bold text-green-600 text-sm">Rp 0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BODY MODAL (SCROLLABLE) -->
+    <div class="p-4 overflow-y-auto flex-1 bg-gray-50/30">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-sm font-semibold text-gray-800">History Transaksi</h3>
+        <button id="tombolTambahRealisasiModal" class="hidden btn-primary text-xs px-3 py-1.5 flex items-center gap-1">+ Tambah Realisasi</button>
+      </div>
+
+      <div id="isiHistoryTransaksi" class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <!-- Diisi oleh JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL: LOGIN (Dropdown Role)
+     ============================================ -->
+<div id="modalLogin" class="modal-overlay">
+  <div class="modal-box">
+    <h2 class="text-lg font-semibold mb-1">Login</h2>
+    <p class="text-sm text-gray-500 mb-4">Pilih role Anda dan masukkan password.</p>
+    <form id="formLogin" class="space-y-3">
+      
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Pilih Role</label>
+        <select id="inputRole" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option value="" disabled selected>-- Pilih Role Anda --</option>
+          <option value="Kades">Kepala Desa</option>
+          <option value="Sekdes">Sekretaris Desa</option>
+          <option value="Bendahara">Bendahara Desa</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Password</label>
+        <input type="password" id="inputPassword" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white" placeholder="••••••••">
+      </div>
+      
+      <div id="pesanLogin" class="hidden text-sm px-3 py-2 rounded-lg"></div>
+      
+      <div class="flex gap-2 pt-2">
+        <button type="button" id="batalLogin" class="btn-secondary flex-1 text-sm">Batal</button>
+        <button type="submit" id="submitLogin" class="btn-primary flex-1 text-sm">Masuk</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL: UBAH PASSWORD
+     ============================================ -->
+<div id="modalUbahPassword" class="modal-overlay">
+  <div class="modal-box">
+    <h2 class="text-lg font-semibold mb-1">Ubah Password</h2>
+    <p class="text-sm text-gray-500 mb-4">Masukkan password baru Anda.</p>
+    <form id="formUbahPassword" class="space-y-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Password Baru</label>
+        <input type="password" id="inputPassBaru" required minlength="6" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
+        <input type="password" id="inputPassKonfirm" required minlength="6" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+      </div>
+      <div id="pesanUbahPass" class="hidden text-sm px-3 py-2 rounded-lg"></div>
+      <div class="flex gap-2 pt-2">
+        <button type="button" id="batalUbahPass" class="btn-secondary flex-1 text-sm">Batal</button>
+        <button type="submit" id="submitUbahPass" class="btn-primary flex-1 text-sm">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL: UBAH NAMA (SEKDES / BENDAHARA)
+     ============================================ -->
+<div id="modalUbahNamaOperator" class="modal-overlay">
+  <div class="modal-box">
+    <h2 id="judulUbahNama" class="text-lg font-semibold mb-1">Ubah Nama</h2>
+    <p class="text-sm text-gray-500 mb-4">Ubah nama tampilan untuk akun ini.</p>
+    <form id="formUbahNamaOperator" class="space-y-3">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Nama Lengkap</label>
+        <input type="text" id="inputNamaOperatorBaru" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+      </div>
+      <div id="pesanUbahNama" class="hidden text-sm px-3 py-2 rounded-lg"></div>
+      <div class="flex gap-2 pt-2">
+        <button type="button" id="batalUbahNama" class="btn-secondary flex-1 text-sm">Batal</button>
+        <button type="submit" id="submitUbahNama" class="btn-primary flex-1 text-sm">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL: TAMBAH TAHUN & KEGIATAN (INDUK-ANAK)
+     ============================================ -->
+<div id="modalTambahTahun" class="modal-overlay">
+  <div class="modal-box max-h-[90vh] w-full max-w-md p-0 flex flex-col overflow-hidden">
+    <div class="p-4 border-b border-gray-200 bg-white shrink-0">
+      <h2 class="text-base font-semibold mb-0.5">Buat Tahun & Rencana Kegiatan</h2>
+      <div class="bg-blue-50 border border-blue-100 p-2 rounded-lg mt-2">
+        <label class="block text-[10px] font-bold text-blue-900 mb-1">Tahun Anggaran</label>
+        <input type="number" id="inputTahunBaru" required min="2020" max="2100" class="w-full border border-blue-300 rounded-md px-2 py-1.5 text-xs bg-white font-bold">
+      </div>
+    </div>
+    <div class="p-4 overflow-y-auto flex-1">
+      <form id="formTambahTahun" class="flex flex-col h-full">
+        <div class="flex-1">
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-[11px] font-bold text-gray-700">Rencana Kegiatan (RK)</label>
+            <button type="button" id="btnTambahBarisKegiatan" class="btn-secondary text-[9px] px-2 py-0.5 h-auto min-h-0 bg-blue-50 text-blue-700 border-blue-200">+ Tambah Baris</button>
+          </div>
+          <div id="wadahBarisKegiatan" class="space-y-2"></div>
+        </div>
+        <div id="pesanTambahTahun" class="hidden text-xs px-2 py-1.5 rounded-lg mt-3"></div>
+        <div class="flex gap-2 pt-3 border-t border-gray-200 mt-4">
+          <button type="button" id="batalTambahTahun" class="btn-secondary flex-1 text-xs py-2">Batal</button>
+          <button type="submit" id="submitTambahTahun" class="btn-primary flex-1 text-xs py-2">Simpan Semua</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL: TAMBAH KEGIATAN (TAHUN BERJALAN)
+     ============================================ -->
+<div id="modalTambahKegiatan" class="modal-overlay">
+  <div class="modal-box max-h-[90vh] w-full max-w-md p-4 flex flex-col">
+    <h2 class="text-base font-semibold mb-0.5">Tambah Kegiatan Baru</h2>
+    <p id="labelTahunKegiatan" class="text-[11px] text-gray-500 mb-3">Untuk Tahun: -</p>
+    <form id="formTambahKegiatan" class="space-y-3">
+      <div>
+        <label class="block text-[11px] font-bold text-gray-700 mb-1">Kategori Akun</label>
+        <select id="inputKategoriKegiatan" required class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white">
+          <option value="" disabled selected>-- Pilih Kategori Akun --</option>
+          <option value="Pendapatan">Pendapatan</option>
+          <option value="Belanja">Belanja</option>
+          <option value="Pembiayaan">Pembiayaan</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-[11px] font-bold text-gray-700 mb-1">Nama Kegiatan</label>
+        <input type="text" id="inputNamaKegiatanBaru" required class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white">
+      </div>
+      <div>
+        <label class="block text-[11px] font-bold text-gray-700 mb-1">Pagu Anggaran Awal (Rp)</label>
+        <input type="text" inputmode="numeric" id="inputPaguKegiatanBaru" required class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white">
+      </div>
+      <div id="pesanTambahKegiatan" class="hidden text-xs px-2 py-1.5 rounded-lg mt-2"></div>
+      <div class="flex gap-2 pt-2 border-t border-gray-200 mt-2">
+        <button type="button" id="batalTambahKegiatan" class="btn-secondary flex-1 text-xs py-1.5">Batal</button>
+        <button type="submit" id="submitTambahKegiatan" class="btn-primary flex-1 text-xs py-1.5">Simpan Kegiatan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL: EDIT KEGIATAN
+     ============================================ -->
+<div id="modalEditKegiatan" class="modal-overlay">
+  <div class="modal-box max-h-[90vh] w-full max-w-md p-4 flex flex-col">
+    <h2 class="text-base font-semibold mb-0.5">Edit Kegiatan</h2>
+    <p class="text-[11px] text-gray-500 mb-3">Ubah data rencana kegiatan dan revisi anggaran.</p>
+    <form id="formEditKegiatan" class="space-y-3">
+      <input type="hidden" id="editKegiatanUuid">
+      <div>
+        <label class="block text-[11px] font-bold text-gray-700 mb-1">Kategori Akun</label>
+        <select id="editKategoriKegiatan" required class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white">
+          <option value="Pendapatan">Pendapatan</option>
+          <option value="Belanja">Belanja</option>
+          <option value="Pembiayaan">Pembiayaan</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-[11px] font-bold text-gray-700 mb-1">Nama Kegiatan</label>
+        <input type="text" id="editNamaKegiatan" required class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white">
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-[11px] font-bold text-gray-700 mb-1">Anggaran Awal</label>
+          <input type="text" inputmode="numeric" id="editPaguAwal" required class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-gray-700 mb-1">Anggaran Perubahan</label>
+          <input type="text" inputmode="numeric" id="editPaguPerubahan" required class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white">
+        </div>
+      </div>
+      <div id="pesanEditKegiatan" class="hidden text-xs px-2 py-1.5 rounded-lg mt-2"></div>
+      <div class="flex gap-2 pt-2 border-t border-gray-200 mt-2">
+        <button type="button" id="batalEditKegiatan" class="btn-secondary flex-1 text-xs py-1.5">Batal</button>
+        <button type="submit" id="submitEditKegiatan" class="btn-primary flex-1 text-xs py-1.5">Simpan Perubahan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL: FORM REALISASI (INPUT / EDIT)
+     ============================================ -->
+<div id="modalFormRealisasi" class="modal-overlay">
+  <div class="modal-box max-h-[95vh] w-full max-w-md p-4 flex flex-col overflow-y-auto">
+    <h2 id="judulFormRealisasi" class="text-base font-semibold mb-0.5">Input Realisasi</h2>
+    <p id="labelKegiatanRealisasi" class="text-[11px] text-gray-500 mb-3">-</p>
+
+    <form id="formRealisasi" class="space-y-3">
+      <input type="hidden" id="realisasiUuid">
+      <input type="hidden" id="realisasiRencanaUuid">
+      
+      <div>
+        <label class="block text-[11px] font-bold text-gray-700 mb-1">Uraian Transaksi</label>
+        <input type="text" id="inputUraianRealisasi" required class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white" placeholder="Contoh: Beli Semen 50 Kg">
+      </div>
+      
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-[11px] font-bold text-gray-700 mb-1">Volume</label>
+          <input type="number" step="0.01" id="inputVolumeRealisasi" required min="0" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white" placeholder="0">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-gray-700 mb-1">Satuan</label>
+          <input type="text" id="inputSatuanRealisasi" required class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white" placeholder="pcs, sak, kg">
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-[11px] font-bold text-gray-700 mb-1">Harga Satuan (Rp)</label>
+          <input type="text" inputmode="numeric" id="inputHargaRealisasi" required class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white" placeholder="0">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-gray-700 mb-1">Durasi (Opsional)</label>
+          <input type="number" step="0.01" id="inputDurasiRealisasi" min="0" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white" value="0">
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-[11px] font-bold text-gray-700 mb-1">Satuan Durasi</label>
+          <input type="text" id="inputSatuanDurasiRealisasi" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white" placeholder="hari, bulan, (-)">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-gray-700 mb-1">Tanggal</label>
+          <input type="date" id="inputTanggalRealisasi" required class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs bg-white">
+        </div>
+      </div>
+      
+      <div class="bg-gray-50 border border-gray-200 rounded-lg p-2.5 flex justify-between items-center mt-2">
+        <span class="text-[11px] font-medium text-gray-600">Total Belanja:</span>
+        <span id="previewTotalRealisasi" class="text-sm font-bold text-blue-700">Rp 0</span>
+      </div>
+
+      <div id="pesanRealisasi" class="hidden text-xs px-2 py-1.5 rounded-lg mt-2"></div>
+      
+      <div class="flex gap-2 pt-3 border-t border-gray-200 mt-3">
+        <button type="button" id="batalRealisasi" class="btn-secondary flex-1 text-xs py-2">Batal</button>
+        <button type="submit" id="submitRealisasi" class="btn-primary flex-1 text-xs py-2">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase.js"></script>
+<script src="./app.js"></script>
+
+</body>
+</html>
